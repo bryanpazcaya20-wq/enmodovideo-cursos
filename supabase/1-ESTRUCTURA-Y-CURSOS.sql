@@ -1,0 +1,794 @@
+-- =============================================================
+-- En Modo Video · Cursos — TODO EN UNO (estructura + cursos migrados)
+-- Pégalo completo en Supabase → SQL Editor → Run. Solo se ejecuta UNA vez.
+-- Los alumnos van aparte: privado/0102_alumnos.sql
+-- =============================================================
+
+-- >>>>> migrations/0001_schema.sql
+-- =============================================================
+-- En Modo Video · Cursos — 0001: tipos, tablas e índices
+-- Ejecutar en orden en Supabase → SQL Editor (0001, 0002, 0003, 0004).
+-- =============================================================
+
+create extension if not exists citext;
+
+-- ---------- Tipos ----------
+create type public.user_role         as enum ('member', 'admin');
+create type public.auth_provider     as enum ('email', 'google');
+create type public.course_status     as enum ('draft', 'published');
+create type public.course_level      as enum ('basico', 'intermedio', 'avanzado');
+create type public.order_status      as enum ('pending', 'paid', 'refunded', 'failed', 'cancelled');
+create type public.enrollment_source as enum ('purchase', 'admin', 'migration', 'free_coupon');
+create type public.discount_type     as enum ('percent', 'fixed');
+
+-- ---------- Perfiles ----------
+create table public.profiles (
+  id              uuid primary key references auth.users(id) on delete cascade,
+  email           text not null unique,
+  full_name       text,
+  avatar_url      text,
+  role            public.user_role not null default 'member',
+  provider        public.auth_provider not null default 'email',
+  blocked_at      timestamptz,
+  blocked_reason  text,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+-- ---------- Cursos ----------
+create table public.courses (
+  id                 uuid primary key default gen_random_uuid(),
+  slug               text not null unique,
+  title              text not null,
+  subtitle           text,
+  description_html   text,
+  device_label       text,                        -- "Celular", "PC"…
+  level              public.course_level not null default 'basico',
+  cover_url          text,
+  promo_video_id     text,                        -- video de presentación (Bunny), público
+  learn_points       text[] not null default '{}',-- "Lo que aprenderás"
+  requirements       text[] not null default '{}',
+  price_usd          numeric(10,2) not null check (price_usd >= 0),
+  -- Promoción: precio rebajado con fecha de fin opcional (se muestra el precio normal tachado)
+  sale_price_usd     numeric(10,2) check (sale_price_usd is null or sale_price_usd >= 0),
+  sale_ends_at       timestamptz,
+  status             public.course_status not null default 'draft',
+  sort_order         int not null default 0,
+  wp_id              bigint unique,               -- id en el WordPress anterior (migración)
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
+);
+create index courses_status_order_idx on public.courses (status, sort_order);
+
+-- ---------- Módulos ----------
+create table public.course_modules (
+  id          uuid primary key default gen_random_uuid(),
+  course_id   uuid not null references public.courses(id) on delete cascade,
+  title       text not null,
+  sort_order  int not null default 0,
+  wp_id       bigint unique,
+  created_at  timestamptz not null default now()
+);
+create index course_modules_course_idx on public.course_modules (course_id, sort_order);
+
+-- ---------- Lecciones (datos públicos del temario) ----------
+create table public.lessons (
+  id                uuid primary key default gen_random_uuid(),
+  course_id         uuid not null references public.courses(id) on delete cascade,
+  module_id         uuid not null references public.course_modules(id) on delete cascade,
+  title             text not null,
+  sort_order        int not null default 0,
+  is_preview        boolean not null default false,  -- clase gratis visible sin comprar
+  duration_seconds  int,
+  wp_id             bigint unique,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now()
+);
+create index lessons_module_idx on public.lessons (module_id, sort_order);
+create index lessons_course_idx on public.lessons (course_id);
+
+-- ---------- Lecciones (contenido protegido) ----------
+create table public.lesson_content (
+  lesson_id        uuid primary key references public.lessons(id) on delete cascade,
+  bunny_video_id   text,            -- null = lección solo de texto (p. ej. "Material de trabajo")
+  body_html        text,            -- texto, enlaces de descarga, etc.
+  updated_at       timestamptz not null default now()
+);
+
+-- ---------- Cupones ----------
+create table public.coupons (
+  id             uuid primary key default gen_random_uuid(),
+  code           citext not null unique,
+  discount_type  public.discount_type not null default 'percent',
+  amount         numeric(10,2) not null check (amount > 0),
+  course_id      uuid references public.courses(id) on delete cascade,  -- null = todos los cursos
+  max_uses       int check (max_uses is null or max_uses > 0),
+  used_count     int not null default 0,
+  starts_at      timestamptz,
+  expires_at     timestamptz,
+  active         boolean not null default true,
+  note           text,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  constraint coupons_percent_max check (discount_type <> 'percent' or amount <= 100)
+);
+
+-- ---------- Pedidos ----------
+create table public.orders (
+  id                 uuid primary key default gen_random_uuid(),
+  user_id            uuid references public.profiles(id) on delete set null,
+  course_id          uuid references public.courses(id) on delete set null,
+  coupon_id          uuid references public.coupons(id) on delete set null,
+  coupon_code        text,
+  list_price         numeric(10,2) not null,
+  discount           numeric(10,2) not null default 0,
+  amount             numeric(10,2) not null,
+  currency           text not null default 'USD',
+  status             public.order_status not null default 'pending',
+  provider           text not null default 'paypal',  -- paypal | free | wordpress
+  paypal_order_id    text unique,
+  paypal_capture_id  text unique,
+  payer_email        text,
+  paid_at            timestamptz,
+  refunded_at        timestamptz,
+  raw                jsonb,
+  created_at         timestamptz not null default now(),
+  updated_at         timestamptz not null default now()
+);
+create index orders_user_idx on public.orders (user_id, created_at desc);
+create index orders_status_paid_idx on public.orders (status, paid_at desc);
+
+-- ---------- Inscripciones (acceso a un curso) ----------
+create table public.enrollments (
+  user_id     uuid not null references public.profiles(id) on delete cascade,
+  course_id   uuid not null references public.courses(id) on delete cascade,
+  source      public.enrollment_source not null,
+  order_id    uuid references public.orders(id) on delete set null,
+  granted_by  uuid references public.profiles(id) on delete set null,
+  expires_at  timestamptz,                    -- null = acceso de por vida
+  revoked_at  timestamptz,
+  created_at  timestamptz not null default now(),
+  primary key (user_id, course_id)
+);
+create index enrollments_course_idx on public.enrollments (course_id);
+
+-- ---------- Accesos por correo (para quien aún no tiene cuenta) ----------
+-- Al crearse la cuenta con ese correo (Google o registro), se convierten en inscripciones.
+create table public.access_grants (
+  id          uuid primary key default gen_random_uuid(),
+  email       citext not null,
+  course_id   uuid not null references public.courses(id) on delete cascade,
+  source      public.enrollment_source not null default 'admin',
+  granted_by  uuid references public.profiles(id) on delete set null,
+  note        text,
+  claimed_by  uuid references public.profiles(id) on delete set null,
+  claimed_at  timestamptz,
+  created_at  timestamptz not null default now(),
+  unique (email, course_id)
+);
+
+-- ---------- Progreso ----------
+create table public.lesson_progress (
+  user_id       uuid not null references public.profiles(id) on delete cascade,
+  lesson_id     uuid not null references public.lessons(id) on delete cascade,
+  course_id     uuid not null references public.courses(id) on delete cascade,
+  completed_at  timestamptz not null default now(),
+  primary key (user_id, lesson_id)
+);
+create index lesson_progress_course_idx on public.lesson_progress (user_id, course_id);
+
+-- Progreso importado del WordPress para alumnos que aún no tienen cuenta (se reclama con el correo).
+create table public.pending_progress (
+  email         citext not null,
+  lesson_id     uuid not null references public.lessons(id) on delete cascade,
+  completed_at  timestamptz not null default now(),
+  primary key (email, lesson_id)
+);
+
+-- ---------- Una sola sesión activa por cuenta ----------
+create table public.active_sessions (
+  user_id     uuid primary key references public.profiles(id) on delete cascade,
+  session_id  uuid not null,
+  user_agent  text,
+  updated_at  timestamptz not null default now()
+);
+
+-- ---------- Auditoría ----------
+create table public.audit_log (
+  id               bigint generated always as identity primary key,
+  actor_id         uuid references public.profiles(id) on delete set null,
+  action           text not null,
+  target_user_id   uuid references public.profiles(id) on delete set null,
+  target_course_id uuid references public.courses(id) on delete set null,
+  reason           text,
+  metadata         jsonb,
+  created_at       timestamptz not null default now()
+);
+create index audit_log_created_idx on public.audit_log (created_at desc);
+
+-- ---------- Webhooks (idempotencia) ----------
+create table public.webhook_events (
+  id           bigint generated always as identity primary key,
+  provider     text not null,
+  event_id     text not null,
+  event_type   text not null,
+  payload      jsonb not null,
+  processed_at timestamptz,
+  error        text,
+  received_at  timestamptz not null default now(),
+  unique (provider, event_id)
+);
+
+-- ---------- Correos ----------
+create table public.email_log (
+  id         bigint generated always as identity primary key,
+  user_id    uuid references public.profiles(id) on delete set null,
+  to_email   text not null,
+  template   text not null,
+  dedupe_key text unique,
+  sent_at    timestamptz not null default now(),
+  error      text
+);
+
+-- ---------- Límite de intentos ----------
+create table public.rate_limits (
+  key          text primary key,
+  hits         int not null default 0,
+  window_start timestamptz not null default now()
+);
+
+-- >>>>> migrations/0002_functions.sql
+-- =============================================================
+-- En Modo Video · Cursos — 0002: funciones y triggers
+-- =============================================================
+
+-- ---------- ¿Es admin? ----------
+create or replace function public.is_admin(uid uuid default auth.uid())
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (select 1 from public.profiles where id = uid and role = 'admin');
+$$;
+
+-- ---------- ¿Tiene acceso a este curso? (ÚNICA fuente de verdad) ----------
+create or replace function public.has_course_access(p_course uuid, uid uuid default auth.uid())
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select uid is not null and (
+    public.is_admin(uid) or exists (
+      select 1
+      from public.enrollments e
+      join public.profiles p on p.id = e.user_id
+      where e.user_id = uid
+        and e.course_id = p_course
+        and e.revoked_at is null
+        and (e.expires_at is null or e.expires_at > now())
+        and p.blocked_at is null
+    )
+  );
+$$;
+
+-- ---------- updated_at automático ----------
+create or replace function public.set_updated_at()
+returns trigger language plpgsql as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+create trigger profiles_updated_at       before update on public.profiles       for each row execute function public.set_updated_at();
+create trigger courses_updated_at        before update on public.courses        for each row execute function public.set_updated_at();
+create trigger lessons_updated_at        before update on public.lessons        for each row execute function public.set_updated_at();
+create trigger lesson_content_updated_at before update on public.lesson_content for each row execute function public.set_updated_at();
+create trigger coupons_updated_at        before update on public.coupons        for each row execute function public.set_updated_at();
+create trigger orders_updated_at         before update on public.orders         for each row execute function public.set_updated_at();
+create trigger active_sessions_updated_at before update on public.active_sessions for each row execute function public.set_updated_at();
+
+-- ---------- Convierte los accesos y el progreso guardados por correo en inscripciones ----------
+create or replace function public.claim_access_grants(p_user uuid)
+returns int
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_email text;
+  v_count int := 0;
+begin
+  select email into v_email from public.profiles where id = p_user;
+  if v_email is null then return 0; end if;
+
+  insert into public.enrollments (user_id, course_id, source, granted_by)
+  select p_user, g.course_id, g.source, g.granted_by
+  from public.access_grants g
+  where g.email = v_email::citext and g.claimed_at is null
+  on conflict (user_id, course_id) do update
+    set revoked_at = null
+    where public.enrollments.revoked_at is not null;
+  get diagnostics v_count = row_count;
+
+  update public.access_grants
+     set claimed_by = p_user, claimed_at = now()
+   where email = v_email::citext and claimed_at is null;
+
+  insert into public.lesson_progress (user_id, lesson_id, course_id, completed_at)
+  select p_user, pp.lesson_id, l.course_id, pp.completed_at
+  from public.pending_progress pp
+  join public.lessons l on l.id = pp.lesson_id
+  where pp.email = v_email::citext
+  on conflict do nothing;
+
+  delete from public.pending_progress where email = v_email::citext;
+
+  -- Pedidos de la web anterior (WordPress) hechos con este correo
+  update public.orders
+     set user_id = p_user
+   where user_id is null and provider = 'wordpress' and lower(payer_email) = lower(v_email);
+
+  return v_count;
+end;
+$$;
+
+-- ---------- Al registrarse: crear perfil y reclamar accesos ----------
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_provider public.auth_provider := 'email';
+begin
+  if coalesce(new.raw_app_meta_data->>'provider', 'email') = 'google' then
+    v_provider := 'google';
+  end if;
+
+  insert into public.profiles (id, email, full_name, avatar_url, provider)
+  values (
+    new.id,
+    lower(new.email),
+    coalesce(new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'name'),
+    new.raw_user_meta_data->>'avatar_url',
+    v_provider
+  )
+  on conflict (id) do nothing;
+
+  -- Los accesos por correo se reclaman cuando el correo está confirmado
+  -- (Google siempre lo está; en el registro con contraseña, al confirmar el correo).
+  if new.email_confirmed_at is not null then
+    perform public.claim_access_grants(new.id);
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- Al confirmar el correo (registro con contraseña): reclamar accesos.
+create or replace function public.handle_user_confirmed()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if old.email_confirmed_at is null and new.email_confirmed_at is not null then
+    perform public.claim_access_grants(new.id);
+  end if;
+  return new;
+end;
+$$;
+
+create trigger on_auth_user_confirmed
+  after update of email_confirmed_at on auth.users
+  for each row execute function public.handle_user_confirmed();
+
+-- ---------- Anti-escalada: un miembro no puede cambiarse rol, correo ni bloqueo ----------
+create or replace function public.protect_profile_columns()
+returns trigger
+language plpgsql set search_path = public
+as $$
+begin
+  if current_user not in ('authenticated', 'anon') then
+    return new;
+  end if;
+  if new.role <> old.role or new.email <> old.email or new.provider <> old.provider
+     or new.blocked_at is distinct from old.blocked_at or new.blocked_reason is distinct from old.blocked_reason then
+    raise exception 'No tienes permiso para modificar estos datos';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger profiles_protect_columns
+  before update on public.profiles
+  for each row execute function public.protect_profile_columns();
+
+-- ---------- Confirmar un pedido pagado (idempotente y atómico) ----------
+-- Marca el pedido como pagado, crea la inscripción y suma el uso del cupón.
+-- Devuelve true solo la PRIMERA vez (para enviar el correo una sola vez).
+create or replace function public.fulfill_order(
+  p_order uuid,
+  p_capture_id text,
+  p_payer_email text,
+  p_raw jsonb
+)
+returns boolean
+language plpgsql security definer set search_path = public
+as $$
+declare
+  o public.orders%rowtype;
+begin
+  select * into o from public.orders where id = p_order for update;
+  if not found then raise exception 'Pedido no encontrado'; end if;
+  if o.status = 'paid' then return false; end if;
+  if o.status not in ('pending', 'failed') then raise exception 'El pedido no se puede confirmar (estado %)', o.status; end if;
+
+  update public.orders
+     set status = 'paid', paid_at = now(), paypal_capture_id = p_capture_id,
+         payer_email = p_payer_email, raw = coalesce(p_raw, raw)
+   where id = p_order;
+
+  insert into public.enrollments (user_id, course_id, source, order_id)
+  values (o.user_id, o.course_id, case when o.provider = 'free' then 'free_coupon'::public.enrollment_source else 'purchase' end, o.id)
+  on conflict (user_id, course_id) do update
+    set revoked_at = null, expires_at = null, order_id = excluded.order_id, source = excluded.source;
+
+  if o.coupon_id is not null then
+    update public.coupons set used_count = used_count + 1 where id = o.coupon_id;
+  end if;
+
+  return true;
+end;
+$$;
+
+-- ---------- Límite de intentos (devuelve true si está permitido) ----------
+create or replace function public.check_rate_limit(p_key text, p_max int, p_window_seconds int)
+returns boolean
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_hits int;
+begin
+  insert into public.rate_limits as r (key, hits, window_start)
+  values (p_key, 1, now())
+  on conflict (key) do update
+    set hits = case when r.window_start < now() - make_interval(secs => p_window_seconds) then 1 else r.hits + 1 end,
+        window_start = case when r.window_start < now() - make_interval(secs => p_window_seconds) then now() else r.window_start end
+  returning hits into v_hits;
+  return v_hits <= p_max;
+end;
+$$;
+
+-- ---------- Ventas por día (panel) ----------
+create or replace function public.sales_by_day(p_days int default 30)
+returns table (day date, orders bigint, revenue numeric)
+language sql stable security definer set search_path = public
+as $$
+  select d::date as day,
+         count(o.id) as orders,
+         coalesce(sum(o.amount), 0) as revenue
+  from generate_series((now() at time zone 'America/Lima')::date - (p_days - 1), (now() at time zone 'America/Lima')::date, interval '1 day') d
+  left join public.orders o
+    on o.status = 'paid' and (o.paid_at at time zone 'America/Lima')::date = d::date
+  group by d
+  order by d;
+$$;
+
+-- Estas funciones solo las usa el servidor (service role)
+revoke execute on function public.check_rate_limit(text, int, int) from public, anon, authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.handle_user_confirmed() from public, anon, authenticated;
+revoke execute on function public.claim_access_grants(uuid) from public, anon, authenticated;
+revoke execute on function public.fulfill_order(uuid, text, text, jsonb) from public, anon, authenticated;
+revoke execute on function public.sales_by_day(int) from public, anon, authenticated;
+
+-- >>>>> migrations/0003_rls.sql
+-- =============================================================
+-- En Modo Video · Cursos — 0003: seguridad por filas (RLS)
+-- Regla general: el público lee el catálogo publicado; cada alumno lee lo suyo;
+-- todo lo que escribe el panel pasa por el servidor (service role) tras validar al admin.
+-- =============================================================
+
+alter table public.profiles         enable row level security;
+alter table public.courses          enable row level security;
+alter table public.course_modules   enable row level security;
+alter table public.lessons          enable row level security;
+alter table public.lesson_content   enable row level security;
+alter table public.coupons          enable row level security;
+alter table public.orders           enable row level security;
+alter table public.enrollments      enable row level security;
+alter table public.access_grants    enable row level security;
+alter table public.lesson_progress  enable row level security;
+alter table public.pending_progress enable row level security;
+alter table public.active_sessions  enable row level security;
+alter table public.audit_log        enable row level security;
+alter table public.webhook_events   enable row level security;
+alter table public.email_log        enable row level security;
+alter table public.rate_limits      enable row level security;
+-- coupons, access_grants, pending_progress, active_sessions, audit_log, webhook_events,
+-- email_log y rate_limits: sin políticas → solo el servidor (service role) los usa.
+
+-- ---------- Perfiles ----------
+create policy "perfil: ver el propio" on public.profiles
+  for select to authenticated using (id = auth.uid() or public.is_admin());
+create policy "perfil: editar el propio" on public.profiles
+  for update to authenticated using (id = auth.uid()) with check (id = auth.uid());
+
+-- ---------- Catálogo público ----------
+create policy "cursos: ver publicados" on public.courses
+  for select to anon, authenticated using (status = 'published' or public.is_admin());
+
+create policy "módulos: ver de cursos publicados" on public.course_modules
+  for select to anon, authenticated
+  using (exists (select 1 from public.courses c where c.id = course_id and (c.status = 'published' or public.is_admin())));
+
+create policy "lecciones: ver de cursos publicados" on public.lessons
+  for select to anon, authenticated
+  using (exists (select 1 from public.courses c where c.id = course_id and (c.status = 'published' or public.is_admin())));
+
+-- ---------- Contenido protegido: inscritos, admins o clase gratis ----------
+create policy "contenido: inscritos o vista previa" on public.lesson_content
+  for select to anon, authenticated
+  using (
+    exists (
+      select 1 from public.lessons l join public.courses c on c.id = l.course_id
+      where l.id = lesson_id
+        and (public.is_admin()
+             or (c.status = 'published' and (l.is_preview or public.has_course_access(l.course_id))))
+    )
+  );
+
+-- ---------- Lo del alumno ----------
+create policy "inscripciones: ver las propias" on public.enrollments
+  for select to authenticated using (user_id = auth.uid() or public.is_admin());
+
+create policy "pedidos: ver los propios" on public.orders
+  for select to authenticated using (user_id = auth.uid() or public.is_admin());
+
+create policy "progreso: ver el propio" on public.lesson_progress
+  for select to authenticated using (user_id = auth.uid());
+create policy "progreso: marcar (con acceso)" on public.lesson_progress
+  for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and public.has_course_access(course_id)
+    and exists (select 1 from public.lessons l where l.id = lesson_id and l.course_id = course_id)
+  );
+create policy "progreso: desmarcar" on public.lesson_progress
+  for delete to authenticated using (user_id = auth.uid());
+
+-- >>>>> migrations/0004_storage.sql
+-- =============================================================
+-- En Modo Video · Cursos — 0004: almacenamiento de imágenes
+-- Bucket público "course-media": portadas e imágenes de los cursos.
+-- Solo el servidor sube archivos (URL firmada que genera tras validar al admin).
+-- =============================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('course-media', 'course-media', true, 5 * 1024 * 1024, array['image/jpeg', 'image/png', 'image/webp'])
+on conflict (id) do update
+  set public = excluded.public,
+      file_size_limit = excluded.file_size_limit,
+      allowed_mime_types = excluded.allowed_mime_types;
+
+-- >>>>> seed/0101_cursos.sql
+-- Contenido migrado desde el WordPress (Tutor LMS). Generado automáticamente.
+-- Se puede ejecutar más de una vez: no duplica.
+begin;
+insert into public.courses (id, slug, title, subtitle, description_html, device_label, level, cover_url, promo_video_id, learn_points, requirements, price_usd, status, sort_order, wp_id)
+values ('e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'capcut-celular', 'CapCut Celular', 'Edita videos profesionales desde tu celular, paso a paso y sin experiencia previa.', '<p>Aprende a crear videos impactantes directamente desde tu celular utilizando <strong data-start="155" data-end="165">CapCut</strong>, una de las aplicaciones de edición más potentes y fáciles de usar del momento. En esta formación dominarás desde las funciones básicas hasta herramientas avanzadas para producir contenido atractivo para redes sociales, negocios o proyectos personales.</p><p data-start="1142" data-end="1312">Trabajamos paso a paso con ejercicios reales para que al finalizar el curso puedas editar tus propios videos con seguridad y estilo profesional.</p><p data-start="1314" data-end="1383">No necesitas experiencia previa, solo tu celular y ganas de aprender. Transforma tus ideas en videos que conecten, vendan y generen impacto. 💡✨</p>', 'Celular', 'basico', '/cursos/capcut-celular.webp', 'ae38f0cc-f58d-4760-902c-43b671e1753c', array['Organizar, cortar y dar formato a tus videos para cada red social','Quitar fondos automáticamente, a mano y con chroma key','Animar con keyframes, curvas de velocidad y máscaras','Mejorar tu voz, extraer audio y trabajar la música','Subtitular automático y manual, con textos que llaman la atención','Transiciones, efectos y herramientas de IA (contacto visual, retoque, seguimiento)','Recrear efectos virales: clones, cambio de ropa, jumpcuts y ritmos']::text[], array['Un celular (Android o iPhone) con CapCut instalado','Ganas de aprender: no necesitas experiencia previa']::text[], 27.9, 'published', 1, 17133)
+on conflict (wp_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('55014371-d530-5ebc-9f43-2877d26e4edd', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 1: Aspectos Básicos', 1, 17139) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('2e145155-73be-5b4b-adde-f489cce8cbf9', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '55014371-d530-5ebc-9f43-2877d26e4edd', 'Bienvenida', 1, true, 17140) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('2e145155-73be-5b4b-adde-f489cce8cbf9', '2200910c-c839-436f-97b0-e829f5233711', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('2be13046-9f52-5b87-b878-5d976bafaf1e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '55014371-d530-5ebc-9f43-2877d26e4edd', 'Instalación y Precios', 2, false, 17156) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('2be13046-9f52-5b87-b878-5d976bafaf1e', '41cea1c6-667a-4985-a203-c29924faac49', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('9d1be0e0-2418-5901-bdd2-7b9878f6ff5e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '55014371-d530-5ebc-9f43-2877d26e4edd', 'Dispositivo Ideal - iPad', 3, false, 17161) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('9d1be0e0-2418-5901-bdd2-7b9878f6ff5e', 'f8455dce-08ec-42c6-b493-843c3b15e5d8', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('fdb8b676-0f3b-5904-82b5-c5a27ece26c3', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '55014371-d530-5ebc-9f43-2877d26e4edd', 'CapCut Celular vs CapCut PC', 4, false, 17162) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('fdb8b676-0f3b-5904-82b5-c5a27ece26c3', 'f3ec5684-1cfc-42ac-a6f9-97a139d3e5a6', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('1481a071-223f-5692-baf8-4db01657916e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '55014371-d530-5ebc-9f43-2877d26e4edd', 'Material de Trabajo', 5, false, 17404) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('1481a071-223f-5692-baf8-4db01657916e', null, '<p>Aquí encontrarás todos el material para completar el taller<br /><strong><em>Link 1:</em></strong> <br /><a href="https://drive.google.com/drive/folders/1KBpi4VgNuZn3U2C1wDmoHVkWBV4Pig7Z">https://drive.google.com/drive/folders/1KBpi4VgNuZn3U2C1wDmoHVkWBV4Pig7Z</a></p>') on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('655b9df7-d696-54ee-82e4-4269f556bc76', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 2: Organización de Videos', 2, 17163) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('864cb234-bfcb-5773-bd0f-c75a4722ceee', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Agregando Contenido', 1, false, 17173) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('864cb234-bfcb-5773-bd0f-c75a4722ceee', '45d459bb-a8b4-4e6f-a425-32451f8ff133', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('feffdb41-1d8b-55d8-b0fc-78798443aad2', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Relación de Aspecto', 2, false, 17174) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('feffdb41-1d8b-55d8-b0fc-78798443aad2', '8bc5d2d3-6deb-447e-b3a1-511fc547f568', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('3cbca2a6-e645-51da-bac7-26dfa753d99d', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Posición Tamaño y Giro', 3, false, 17175) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('3cbca2a6-e645-51da-bac7-26dfa753d99d', 'aa63615f-ffb9-4c0f-9aec-5ef2c386906d', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('4425482a-66f1-5e2f-95a8-1204385110c3', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Organización de Videos', 4, false, 17176) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('4425482a-66f1-5e2f-95a8-1204385110c3', 'edebb381-6a9a-46bf-bee3-944db56f0fa7', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('cbe2590e-bec7-505f-ad4e-3d367891fc9b', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Corte de Videos', 5, false, 17177) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('cbe2590e-bec7-505f-ad4e-3d367891fc9b', '7977511f-b69b-4935-a664-95c6f818015a', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('3b75ad9a-c17b-5d03-8121-09120c97004c', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '655b9df7-d696-54ee-82e4-4269f556bc76', 'Recorte y Ampliación de IA', 6, false, 17178) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('3b75ad9a-c17b-5d03-8121-09120c97004c', '25b169a0-961f-4d6e-ad02-428bc7e636a3', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('6738b137-754d-5893-ab22-87bd07830de0', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 3: Eliminar Fondo', 3, 17164) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('5020bfee-9acb-59e2-80ba-be477b234e8e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '6738b137-754d-5893-ab22-87bd07830de0', 'Eliminación Automática', 1, false, 17179) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('5020bfee-9acb-59e2-80ba-be477b234e8e', '15b817f5-ae6b-484f-9d49-c8ac117cb667', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('ec34c4a5-af61-5086-b972-3aac37452bf6', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '6738b137-754d-5893-ab22-87bd07830de0', 'Eliminación Personalizada', 2, false, 17180) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('ec34c4a5-af61-5086-b972-3aac37452bf6', '435eabb6-27e7-4979-a0a8-6b7d35b8f419', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('2f118443-5a28-5f0a-9916-0b0fb69990e8', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '6738b137-754d-5893-ab22-87bd07830de0', 'Chroma Key', 3, false, 17181) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('2f118443-5a28-5f0a-9916-0b0fb69990e8', 'f7baef23-a0e1-431a-a633-d93b1711c697', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('c4691308-c943-5833-b729-1d1947988064', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 4: Keyframes', 4, 17165) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('11187ce4-b8fb-537b-a1d3-96adc25bc245', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'c4691308-c943-5833-b729-1d1947988064', 'Keyframes en 03 Pasos', 1, false, 17183) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('11187ce4-b8fb-537b-a1d3-96adc25bc245', 'fe243e42-ba26-4ff5-bd89-47346f5e1c1d', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('ff8c9fd7-e751-5a51-9d1e-28735d587b13', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'c4691308-c943-5833-b729-1d1947988064', 'Curvas de Velocidad', 2, false, 17184) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('ff8c9fd7-e751-5a51-9d1e-28735d587b13', '8f1c4b0f-fdc8-435f-a806-65ee8cd24d1e', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('a1469099-7b83-5ace-a4d4-1f84b5337ca3', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'c4691308-c943-5833-b729-1d1947988064', 'Ejercicios', 3, false, 17182) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('a1469099-7b83-5ace-a4d4-1f84b5337ca3', '430c3bdf-8d5b-44b6-b84c-3cef4a6ec105', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('ea7559f9-3937-5202-82a6-d28440ac3355', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 5: Máscaras', 5, 17166) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('a288a920-9ee1-57f8-a23e-fd6b9ec8153f', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'ea7559f9-3937-5202-82a6-d28440ac3355', 'Qué son las Máscaras', 1, false, 17188) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('a288a920-9ee1-57f8-a23e-fd6b9ec8153f', '4a527417-f899-411d-a745-d68471a28652', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('5c50c224-e5db-52aa-abfb-2c95a7f61e34', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'ea7559f9-3937-5202-82a6-d28440ac3355', 'Ejercicios', 2, false, 17189) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('5c50c224-e5db-52aa-abfb-2c95a7f61e34', 'ed56ad17-b668-4a9a-903d-22de66c8cf4f', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('880c61fb-c326-56c0-a340-7b081fc32acd', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 6: Audio', 6, 17167) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('860f83af-1dd9-5b45-9bc2-1a7d8271cd56', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Biblioteca de Audio', 1, false, 17190) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('860f83af-1dd9-5b45-9bc2-1a7d8271cd56', 'e7434b42-afb0-4639-8838-ca8544645c33', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('3f0e37ec-9b17-5c4e-8eab-a358fab7d2ca', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Extraer Audio', 2, false, 17191) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('3f0e37ec-9b17-5c4e-8eab-a358fab7d2ca', '1613f889-9cb2-488e-bb60-d92c17efe9b3', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f089201b-b7d3-5008-9553-ff98992357f4', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Grabar Voz', 3, false, 17192) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f089201b-b7d3-5008-9553-ff98992357f4', '1679b32c-6533-42e9-abee-630343b67d15', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('40ed2422-416b-51dc-a9c4-0b41d832dc85', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Mejorar Voz', 4, false, 17193) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('40ed2422-416b-51dc-a9c4-0b41d832dc85', 'd5079189-1ab0-41c2-ba4e-e64bc8a839e9', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('d281eae3-990f-5685-a1aa-f71c59f00dee', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Filtros y Modificadores de Voz', 5, false, 17194) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('d281eae3-990f-5685-a1aa-f71c59f00dee', 'b972a882-4393-4519-926a-50101d267f31', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('23e1b530-c690-599f-93a5-815fa61a1ace', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '880c61fb-c326-56c0-a340-7b081fc32acd', 'Aparición y Desaparición Progresiva', 6, false, 17195) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('23e1b530-c690-599f-93a5-815fa61a1ace', '369ba072-9bbf-464f-9171-97fca68dbf4f', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('1f817fd7-19e3-551d-bb81-7aa2f128a02b', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 7: Textos', 7, 17168) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('737afe11-f73c-57e7-b2b1-8c31bec4bcf3', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '1f817fd7-19e3-551d-bb81-7aa2f128a02b', 'Herramienta Texto', 1, false, 17196) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('737afe11-f73c-57e7-b2b1-8c31bec4bcf3', 'cfc2fe02-413e-457c-bcd7-ee4d5c8f69dc', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('0375bd98-ed7e-5c13-a2e5-724fb428573e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '1f817fd7-19e3-551d-bb81-7aa2f128a02b', 'Subtitulado', 2, false, 17197) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('0375bd98-ed7e-5c13-a2e5-724fb428573e', '664942f4-b80b-4395-8a0a-a65336294224', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('d5ae1642-d429-54df-bc1e-513555ad0246', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '1f817fd7-19e3-551d-bb81-7aa2f128a02b', 'Subtitulado Manual', 3, false, 17198) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('d5ae1642-d429-54df-bc1e-513555ad0246', '434491dd-5ebf-4acc-9904-cde1db75bb42', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('45617b79-0d6a-5ca0-854a-a294823f1323', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 8: Efectos, transiciones y animaciones', 8, 17169) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('bfed6d9d-461f-5e29-96d8-b1b7bda56584', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '45617b79-0d6a-5ca0-854a-a294823f1323', 'Transiciones', 1, false, 17185) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('bfed6d9d-461f-5e29-96d8-b1b7bda56584', '640de1ea-cf5c-48ca-8ea0-16d32c11e0f7', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('1ef9760f-b22d-5375-9de3-a4784aa7605e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '45617b79-0d6a-5ca0-854a-a294823f1323', 'Animaciones', 2, false, 17186) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('1ef9760f-b22d-5375-9de3-a4784aa7605e', 'ffa0ebe1-e3ea-48be-8023-18376b73dfa7', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('84dc45e1-baf4-598c-af4c-530a07c68d9e', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '45617b79-0d6a-5ca0-854a-a294823f1323', 'Efectos', 3, false, 17187) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('84dc45e1-baf4-598c-af4c-530a07c68d9e', '5f6c39d5-d807-4dfd-9d0f-315863c9d1a7', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('dd5cf0f4-6051-5158-973a-4027d798cfee', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 9: Herramientas', 9, 17170) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('4ab71712-fc9d-52d4-8404-dc88578bf2a9', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Calidad de video', 1, false, 17199) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('4ab71712-fc9d-52d4-8404-dc88578bf2a9', '85453d49-c856-449b-8a86-2891a3f2562a', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('7a3712ce-a8b2-5b8e-a52b-8f6e6700c316', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Estabilización de Cámara', 2, false, 17200) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('7a3712ce-a8b2-5b8e-a52b-8f6e6700c316', '05c0d7c6-10f0-455d-bea8-a21fc51b5386', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f9210fab-df89-5b7a-9f85-fbb5fb21efbe', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Contacto Visual', 3, false, 17201) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f9210fab-df89-5b7a-9f85-fbb5fb21efbe', '9eed1aa2-a3a5-4135-b5a9-49dd86d581a9', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('1d4e10a5-83df-5655-88b0-35aacfb08847', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Retoque', 4, false, 17202) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('1d4e10a5-83df-5655-88b0-35aacfb08847', '3320a732-5497-4c14-8aac-d46df53f820b', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('5c8721de-4f6d-533c-8429-c2ec52b27613', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Seguimiento de Cámara', 5, false, 17203) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('5c8721de-4f6d-533c-8429-c2ec52b27613', 'e49694a7-4181-40a8-9272-7a232da6f1e7', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('0c90635b-4625-515b-93a2-e50e6e334204', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Seguimiento de Texto', 6, false, 17204) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('0c90635b-4625-515b-93a2-e50e6e334204', 'aaa594e5-18ba-445e-ae6c-dc41bb02f0bc', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('c0a48143-a473-590c-ba73-2e9423c1c485', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Congelar', 7, false, 17205) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('c0a48143-a473-590c-ba73-2e9423c1c485', '7246f59d-2a6f-4c91-9d6d-8079ac7ac7e4', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('8ff00424-35f1-536f-a700-9f742d0a43e4', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'dd5cf0f4-6051-5158-973a-4027d798cfee', 'Revertir', 8, false, 17206) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('8ff00424-35f1-536f-a700-9f742d0a43e4', 'd3c1832d-918a-4d47-8c2f-88c2d7ab372c', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('df209f4d-820b-5ab6-b23d-c7373119c7e4', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 10: Ejercicios', 10, 17171) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('c7ad400a-936e-50f0-bdbd-92a0dfad0eed', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Sobre edificios', 1, false, 17208) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('c7ad400a-936e-50f0-bdbd-92a0dfad0eed', '75f130f1-9ad4-45f8-8ca2-a51431b114e0', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('154c3d84-87d8-5217-b93d-08c24930f39d', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Zoom Objetos', 2, false, 17209) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('154c3d84-87d8-5217-b93d-08c24930f39d', '202190c1-735c-48c2-8d4f-dc4ab0377651', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('04fd9a12-20dc-5720-aad8-3ce9c48148f8', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Cambio de Ropa', 3, false, 17210) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('04fd9a12-20dc-5720-aad8-3ce9c48148f8', '01677c06-2072-4662-a718-ffd935cb89d3', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('e2057825-0303-5cf7-a0b3-2c7058975c27', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Jumpcuts', 4, false, 17211) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('e2057825-0303-5cf7-a0b3-2c7058975c27', 'e68d218d-8979-40b5-b5ee-7e0271fa0314', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('8c262b0d-b662-5770-9c55-4b195ac4a016', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Ritmos', 5, false, 17212) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('8c262b0d-b662-5770-9c55-4b195ac4a016', '96d955cf-e38e-4b24-87f7-0bd0fb07db54', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('32120d0c-1457-5220-ad84-30741fbce44b', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'df209f4d-820b-5ab6-b23d-c7373119c7e4', 'Clones', 6, false, 17207) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('32120d0c-1457-5220-ad84-30741fbce44b', 'df6bd483-9346-4e93-aa51-cb92a2fb232a', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('9efd3190-3802-5011-953a-31633f84f597', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', 'Módulo 11: Proyecto Final', 11, 17172) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('774c6d47-ea96-5eee-add4-160192e7ee26', 'e092159f-4a8d-5341-97e1-a8b57bc1f1ce', '9efd3190-3802-5011-953a-31633f84f597', 'Editemos Juntos', 1, false, 17213) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('774c6d47-ea96-5eee-add4-160192e7ee26', '812fddbe-7308-4761-b2a6-f8be4a75151d', null) on conflict (lesson_id) do nothing;
+insert into public.courses (id, slug, title, subtitle, description_html, device_label, level, cover_url, promo_video_id, learn_points, requirements, price_usd, status, sort_order, wp_id)
+values ('334cc810-6a23-5203-a341-e0ee096d0cb2', 'capcut-pc-de-cero-a-pro', 'CapCut PC de Cero a Pro', 'Domina CapCut en tu computadora: de lo básico a técnicas avanzadas con proyectos reales.', '<p data-start="79" data-end="365">Prepárate para crear videos impactantes utilizando una de las herramientas más potentes y versátiles del momento. En este curso aprenderás desde lo más básico hasta técnicas avanzadas que te permitirán producir contenido profesional para redes sociales, negocios o proyectos personales.</p><p data-start="367" data-end="540">Trabajaremos paso a paso con ejercicios prácticos y reales, para que al finalizar puedas editar tus propios videos con confianza, fluidez y un estilo que realmente destaque.</p><p data-start="542" data-end="726" data-is-last-node="" data-is-only-node="">No necesitas experiencia previa, solo tu computadora y ganas de aprender. Es momento de llevar tus ideas a otro nivel y convertirlas en contenido que conecte, venda y genere impacto 🚀</p>', 'PC', 'basico', '/cursos/capcut-pc-de-cero-a-pro.webp', null, array['Importar y organizar tu material como un editor profesional','Formatos de video, cortes precisos y eliminación de fondo a detalle','Keyframes, curvas de velocidad y efectos con máscaras (espejo, cielo)','Audio profesional: música, efectos, grabación y mejora de voz','Subtítulos automáticos y manuales, textos y animaciones','Colorización, iluminación, estabilización y retoque con IA','Exportar en la mejor calidad y editar un proyecto final completo']::text[], array['Una computadora (Windows o Mac) con CapCut PC','No necesitas experiencia previa']::text[], 27.9, 'published', 2, 17214)
+on conflict (wp_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('45148de1-c3ee-58dc-b6af-e77ecfef4947', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 1: Iniciamos', 1, 17216) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('5a093a6b-721e-593c-9f06-16c78ea639cb', '334cc810-6a23-5203-a341-e0ee096d0cb2', '45148de1-c3ee-58dc-b6af-e77ecfef4947', 'Reconocimiento de la Plataforma', 1, true, 17218) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('5a093a6b-721e-593c-9f06-16c78ea639cb', '91809036-045b-4fd0-82fe-e45d7c03334c', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('edd0ac3b-21b1-5517-89f8-89aea72d5883', '334cc810-6a23-5203-a341-e0ee096d0cb2', '45148de1-c3ee-58dc-b6af-e77ecfef4947', 'CapCut Pro', 2, false, 17217) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('edd0ac3b-21b1-5517-89f8-89aea72d5883', 'bb8904c2-1543-4b24-87cf-15b5aa886328', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('c34a41ce-92b8-5119-96f8-05e168a4f244', '334cc810-6a23-5203-a341-e0ee096d0cb2', '45148de1-c3ee-58dc-b6af-e77ecfef4947', 'Material de Trabajo', 3, false, 17402) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('c34a41ce-92b8-5119-96f8-05e168a4f244', null, '<p>Aquí encontrarás todos el material para completar el taller<br /><strong><em>Link 1:</em></strong> <br /><a href="https://drive.google.com/file/d/1UtCl8HYIw-PLUe_5j0idAcZr7K_ToRuy/view?usp=sharing">https://drive.google.com/file/d/1UtCl8HYIw-PLUe_5j0idAcZr7K_ToRuy/view?usp=sharing</a><br /><strong><em>Link 2:</em></strong> <a href="https://drive.google.com/file/d/11oamz_4lPNSV20u2O4Kd07895C2jT8up/view?usp=sharing">https://drive.google.com/file/d/11oamz_4lPNSV20u2O4Kd07895C2jT8up/view?usp=sharing</a></p>') on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('96924baf-9aa3-5263-b2af-6c68cf3bccd9', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 2: Organización de Videos', 2, 17219) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('deb0861d-2b74-54df-afd5-51a9cdad3d61', '334cc810-6a23-5203-a341-e0ee096d0cb2', '96924baf-9aa3-5263-b2af-6c68cf3bccd9', 'Importar Material', 1, false, 17231) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('deb0861d-2b74-54df-afd5-51a9cdad3d61', '70f075ac-e8b7-4414-bb5e-105ad808161c', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f2002905-463f-502e-9563-5b62d583eab4', '334cc810-6a23-5203-a341-e0ee096d0cb2', '96924baf-9aa3-5263-b2af-6c68cf3bccd9', 'Organizando Tus Videos', 2, false, 17230) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f2002905-463f-502e-9563-5b62d583eab4', '581a8ee9-2223-4f0b-a8a8-df5d2ca6dce6', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('194a2cf2-d43b-5348-958d-238b6fb3beb7', '334cc810-6a23-5203-a341-e0ee096d0cb2', '96924baf-9aa3-5263-b2af-6c68cf3bccd9', 'Tamaño Posición y Giro', 3, false, 17233) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('194a2cf2-d43b-5348-958d-238b6fb3beb7', '1dd3720d-3b4b-4ba0-a501-627ebdd9e932', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('41870da6-1c48-5e0d-8ce1-bbf629be1978', '334cc810-6a23-5203-a341-e0ee096d0cb2', '96924baf-9aa3-5263-b2af-6c68cf3bccd9', 'Formatos de Video', 4, false, 17234) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('41870da6-1c48-5e0d-8ce1-bbf629be1978', '75e79d71-c93b-4250-8cc7-47c9256efe53', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('b815f284-a10b-5d41-847c-f6fa0409d8df', '334cc810-6a23-5203-a341-e0ee096d0cb2', '96924baf-9aa3-5263-b2af-6c68cf3bccd9', 'Cortes', 5, false, 17235) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('b815f284-a10b-5d41-847c-f6fa0409d8df', '5386c9c1-1b43-4b05-9410-c49c6ed8c977', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('32a26ad6-a554-596c-82ac-6e451b2ea485', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 3: Eliminar Fondo', 3, 17220) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f4ef1010-9fb1-51a5-b9f6-699eb68e2346', '334cc810-6a23-5203-a341-e0ee096d0cb2', '32a26ad6-a554-596c-82ac-6e451b2ea485', 'Eliminación Automática', 1, false, 17236) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f4ef1010-9fb1-51a5-b9f6-699eb68e2346', '98791c93-0768-422d-bb1c-7872a2f61310', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f4cc8f9c-cb2e-5146-ba6e-2c5a147bd672', '334cc810-6a23-5203-a341-e0ee096d0cb2', '32a26ad6-a554-596c-82ac-6e451b2ea485', 'Eliminación Personalizada', 2, false, 17237) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f4cc8f9c-cb2e-5146-ba6e-2c5a147bd672', 'f63218d8-7206-47a9-990a-6d63427f3d18', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('9f08c632-5975-5afd-9535-c9c386afd090', '334cc810-6a23-5203-a341-e0ee096d0cb2', '32a26ad6-a554-596c-82ac-6e451b2ea485', 'Chroma Key', 3, false, 17238) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('9f08c632-5975-5afd-9535-c9c386afd090', '23b0697c-a462-4cf5-a333-e287834a2a5c', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('25a45ce7-2c4c-5fe2-b40e-7a8e3e63a977', '334cc810-6a23-5203-a341-e0ee096d0cb2', '32a26ad6-a554-596c-82ac-6e451b2ea485', 'Cortando a Detalle', 4, false, 17240) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('25a45ce7-2c4c-5fe2-b40e-7a8e3e63a977', 'a04419d1-74b4-4616-b2df-f669468c74f3', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('7de871eb-862f-549a-ba41-768cfba74fe8', '334cc810-6a23-5203-a341-e0ee096d0cb2', '32a26ad6-a554-596c-82ac-6e451b2ea485', 'Ejercicios', 5, false, 17239) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('7de871eb-862f-549a-ba41-768cfba74fe8', 'b73e4d97-9e1c-48d7-8010-a2bd02e5f6f3', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('51c2f7a2-b10c-5664-94b0-d00086bd2467', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 4: Keyframes', 4, 17221) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('393eaa17-da93-5e57-a0f0-42af1f61deb0', '334cc810-6a23-5203-a341-e0ee096d0cb2', '51c2f7a2-b10c-5664-94b0-d00086bd2467', 'Keyframes en 3 Pasos', 1, false, 17275) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('393eaa17-da93-5e57-a0f0-42af1f61deb0', '853f6581-2b0b-4130-a7c5-f7efdcc39a83', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('73530472-9585-531a-a419-6718036c9b04', '334cc810-6a23-5203-a341-e0ee096d0cb2', '51c2f7a2-b10c-5664-94b0-d00086bd2467', 'Curvas de Velocidad', 2, false, 17276) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('73530472-9585-531a-a419-6718036c9b04', '22c0bac6-7097-46aa-8efe-a149189600c1', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('0229d20b-76cd-5161-bd6f-0fcd4967e0c5', '334cc810-6a23-5203-a341-e0ee096d0cb2', '51c2f7a2-b10c-5664-94b0-d00086bd2467', 'Efecto Aparición y Desaparición', 3, false, 17277) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('0229d20b-76cd-5161-bd6f-0fcd4967e0c5', '8ced7cf6-6b2e-46d8-a573-15b7766bdb95', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('66d8217f-8b1e-52f5-839d-749592c8296c', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 5: Máscaras', 5, 17222) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('e27b8a61-0720-5616-b5e7-94ff93d794b0', '334cc810-6a23-5203-a341-e0ee096d0cb2', '66d8217f-8b1e-52f5-839d-749592c8296c', 'Qué son las Máscaras', 1, false, 17278) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('e27b8a61-0720-5616-b5e7-94ff93d794b0', 'fcb4e932-49b9-44c1-96e4-6e67d5c93ee2', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('25e0b40b-2bbf-521c-94e9-0472bfc7d27d', '334cc810-6a23-5203-a341-e0ee096d0cb2', '66d8217f-8b1e-52f5-839d-749592c8296c', 'Espejo en el Cielo', 2, false, 17279) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('25e0b40b-2bbf-521c-94e9-0472bfc7d27d', '1575d8e6-2035-4f3b-bd75-6f3a59310774', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('ba6bf2f3-6beb-5989-a4da-3fd01756a199', '334cc810-6a23-5203-a341-e0ee096d0cb2', '66d8217f-8b1e-52f5-839d-749592c8296c', 'Frente a Espejo', 3, false, 17280) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('ba6bf2f3-6beb-5989-a4da-3fd01756a199', '14669524-1236-4624-b6d8-a066a2568949', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('a793651e-295a-573e-845f-d544bbd9c18f', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 6: Audio', 6, 17223) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('8acac16e-1b47-5d4e-9bb2-cfc59cfbcfa9', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Música y Efectos de Sonido', 1, false, 17281) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('8acac16e-1b47-5d4e-9bb2-cfc59cfbcfa9', 'd3e479b1-3db1-431f-8269-018eaf488a22', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('0f0f6249-18eb-58db-a672-8390ae15d153', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Extraer Audio', 2, false, 17282) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('0f0f6249-18eb-58db-a672-8390ae15d153', 'c9918c64-9327-4400-bb61-70fd58d621c7', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('dd94a1f4-180b-5132-b713-e376b990e5ed', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Grabación de Voz', 3, false, 17283) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('dd94a1f4-180b-5132-b713-e376b990e5ed', '9e1d7ed5-8576-4729-85a4-98a2bfe5f7c0', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('ff549166-dd30-5160-9f85-fd89486a324a', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Mejorar Voz', 4, false, 17285) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('ff549166-dd30-5160-9f85-fd89486a324a', 'cfc3c5c9-1a91-4fe1-bf8e-5abd68190e59', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('f30b4f5b-76ae-5e46-bf15-25a65a77161d', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Modificadores de Voz', 5, false, 17286) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('f30b4f5b-76ae-5e46-bf15-25a65a77161d', 'ac016ceb-4808-4959-a774-ddc5f776add8', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('af0a324f-f9a1-580c-b799-dd6cc1f654be', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'a793651e-295a-573e-845f-d544bbd9c18f', 'Aparición y Desaparición de Audio', 6, false, 17287) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('af0a324f-f9a1-580c-b799-dd6cc1f654be', '975eca84-273c-4d70-947f-299c8e40b9a2', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('0b00dde3-974c-57f7-8dfa-3556be4105b4', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 7: Texto', 7, 17224) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('65407298-4326-5865-943a-d1f1bf45e13c', '334cc810-6a23-5203-a341-e0ee096d0cb2', '0b00dde3-974c-57f7-8dfa-3556be4105b4', 'Texto y Propiedades', 1, false, 17346) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('65407298-4326-5865-943a-d1f1bf45e13c', '6ab8623b-3100-4766-b424-5fca7b3a7e0f', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('a93a2d72-569b-5ce7-bed6-b4237421878f', '334cc810-6a23-5203-a341-e0ee096d0cb2', '0b00dde3-974c-57f7-8dfa-3556be4105b4', 'Subtítulos', 2, false, 17347) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('a93a2d72-569b-5ce7-bed6-b4237421878f', '57d309d4-353d-4c99-a2ba-381d7bf417e9', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('a14ce457-4c67-5bdc-8d79-141a753a3f5b', '334cc810-6a23-5203-a341-e0ee096d0cb2', '0b00dde3-974c-57f7-8dfa-3556be4105b4', 'Subtítulos Manuales', 3, false, 17345) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('a14ce457-4c67-5bdc-8d79-141a753a3f5b', '01fb753b-b058-480f-b03f-ab03f149b467', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('b7c25f93-b257-5e53-99e4-7c83a1bc89b3', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 8: Efectos', 8, 17225) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('61f9e491-e094-5873-b25c-ec64aadd2284', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'b7c25f93-b257-5e53-99e4-7c83a1bc89b3', 'Transiciones', 1, false, 17392) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('61f9e491-e094-5873-b25c-ec64aadd2284', 'd77af2ff-df05-4e78-9d3f-559b08501456', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('c9fb6c24-14c4-59d9-8f4d-e0c90b09d990', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'b7c25f93-b257-5e53-99e4-7c83a1bc89b3', 'Efectos', 2, false, 17393) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('c9fb6c24-14c4-59d9-8f4d-e0c90b09d990', '6859a622-d3a5-4592-a51d-2ca173b65810', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('282455cc-6f9a-5c41-a202-0cdde70d2519', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'b7c25f93-b257-5e53-99e4-7c83a1bc89b3', 'Animaciones', 3, false, 17394) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('282455cc-6f9a-5c41-a202-0cdde70d2519', '014617e1-0505-4472-b77f-fe4481b9744a', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('be499fb0-e337-5aab-8654-68b0444194c3', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 9: Herramientas', 9, 17226) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('31cd439b-14ae-532c-9db4-4ff79f103388', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Calidad de Imagen', 1, false, 17337) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('31cd439b-14ae-532c-9db4-4ff79f103388', '35ff5054-1ec2-4daa-9c70-cff498a60602', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('0566f372-8068-5f9a-b4b6-98c28fbcf3e2', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Velocidad', 2, false, 17338) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('0566f372-8068-5f9a-b4b6-98c28fbcf3e2', 'ad27fd14-3f29-4a7a-9305-322d29a31a91', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('dc6af43b-fcda-57a8-ae64-5d5fe48441a3', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Adición de Iluminación', 3, false, 17339) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('dc6af43b-fcda-57a8-ae64-5d5fe48441a3', '28dedc0b-216e-42e4-b11e-e88decfe0f1d', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('694aa5bf-3067-5442-9fde-3dcc05563551', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Contacto Visual', 4, false, 17340) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('694aa5bf-3067-5442-9fde-3dcc05563551', 'a254805f-ee30-47f3-9309-83d45d02fd0e', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('a4402a71-54aa-5967-b5cf-d13babbfc5ec', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Estabilización', 5, false, 17341) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('a4402a71-54aa-5967-b5cf-d13babbfc5ec', '6e7f2b32-8308-4fdf-aa1e-4e62015701fe', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('4ae20432-d741-5421-bb63-0365ae26e108', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Congelar', 6, false, 17342) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('4ae20432-d741-5421-bb63-0365ae26e108', 'c5dc1e9b-173a-4887-bdc7-1874d2c9c886', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('5ce99767-5e21-5e06-9eb1-7f8137bff191', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'be499fb0-e337-5aab-8654-68b0444194c3', 'Retoque', 7, false, 17344) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('5ce99767-5e21-5e06-9eb1-7f8137bff191', 'b182c4f5-f493-42e0-b684-70953110c9e9', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('419c3a6e-f446-5745-821e-fef81f519125', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 10: Colorización', 10, 17335) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('99e1c4e7-7dc1-5f16-a5b6-883e848ce3c1', '334cc810-6a23-5203-a341-e0ee096d0cb2', '419c3a6e-f446-5745-821e-fef81f519125', 'Colorización', 1, false, 17336) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('99e1c4e7-7dc1-5f16-a5b6-883e848ce3c1', '7da11427-3619-45cc-b8d8-6140463f32eb', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('ba4804f2-60c7-5686-9a49-0bae4bf03122', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 11: Ejercicios', 11, 17227) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('22e094a1-4301-5f90-a210-136e1c1e65ec', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Sobre edificio', 1, false, 17329) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('22e094a1-4301-5f90-a210-136e1c1e65ec', '25114ddd-904c-48f3-94d5-e4a125ae453c', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('18ab210a-06ee-54d9-b963-68a32e1746cf', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Clones', 2, false, 17330) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('18ab210a-06ee-54d9-b963-68a32e1746cf', '63715dca-6d1f-45b3-8783-255873dfba02', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('fe474f3c-2b35-5e0b-994a-e80764ff7239', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Zoom de Objetos', 3, false, 17331) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('fe474f3c-2b35-5e0b-994a-e80764ff7239', '7a851924-a537-4181-b545-5cca070a4d2a', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('41e8846f-cedb-54a0-ab93-6d7e8c27ceee', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Jumpcuts', 4, false, 17332) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('41e8846f-cedb-54a0-ab93-6d7e8c27ceee', 'e3c375ad-5f72-4a1e-bc1b-75021715bc76', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('dd1c71df-bb93-5a6f-8e40-cbc3f771368f', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Cambio de Ropa', 5, false, 17333) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('dd1c71df-bb93-5a6f-8e40-cbc3f771368f', 'fc210b6e-9db2-475a-9199-b15827bbb1cf', null) on conflict (lesson_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('d6de26e9-df9f-50f0-bee7-2d3214eeaf6b', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'ba4804f2-60c7-5686-9a49-0bae4bf03122', 'Ritmos', 6, false, 17334) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('d6de26e9-df9f-50f0-bee7-2d3214eeaf6b', '93487366-c927-4eb8-bc86-233735fcb214', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('7c599f4d-36eb-5f40-9b11-bd8fc8f21ce3', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 12: Exportación', 12, 17228) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('3ef4289a-ca97-5d62-a5aa-2aaf7144cfc8', '334cc810-6a23-5203-a341-e0ee096d0cb2', '7c599f4d-36eb-5f40-9b11-bd8fc8f21ce3', 'Exportación', 1, false, 17328) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('3ef4289a-ca97-5d62-a5aa-2aaf7144cfc8', 'fc6897cc-6e85-4630-ae60-eccc0f0533fc', null) on conflict (lesson_id) do nothing;
+insert into public.course_modules (id, course_id, title, sort_order, wp_id) values ('8f9d3b7c-550b-5024-aa20-df849eb43d09', '334cc810-6a23-5203-a341-e0ee096d0cb2', 'Módulo 13: Proyecto Final', 13, 17229) on conflict (wp_id) do nothing;
+insert into public.lessons (id, course_id, module_id, title, sort_order, is_preview, wp_id) values ('360103d1-5e37-5a1c-9767-a398cfe4ab21', '334cc810-6a23-5203-a341-e0ee096d0cb2', '8f9d3b7c-550b-5024-aa20-df849eb43d09', 'Proyecto Final', 1, false, 17327) on conflict (wp_id) do nothing;
+insert into public.lesson_content (lesson_id, bunny_video_id, body_html) values ('360103d1-5e37-5a1c-9767-a398cfe4ab21', 'f65bb2e9-c4c0-4856-bfe5-ad184b63c11c', null) on conflict (lesson_id) do nothing;
+commit;

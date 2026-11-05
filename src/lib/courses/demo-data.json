@@ -1,0 +1,1053 @@
+{
+ "courses": [
+  {
+   "id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "slug": "capcut-celular",
+   "title": "CapCut Celular",
+   "subtitle": "Edita videos profesionales desde tu celular, paso a paso y sin experiencia previa.",
+   "description_html": "<p>Aprende a crear videos impactantes directamente desde tu celular utilizando <strong data-start=\"155\" data-end=\"165\">CapCut</strong>, una de las aplicaciones de edición más potentes y fáciles de usar del momento. En esta formación dominarás desde las funciones básicas hasta herramientas avanzadas para producir contenido atractivo para redes sociales, negocios o proyectos personales.</p><p data-start=\"1142\" data-end=\"1312\">Trabajamos paso a paso con ejercicios reales para que al finalizar el curso puedas editar tus propios videos con seguridad y estilo profesional.</p><p data-start=\"1314\" data-end=\"1383\">No necesitas experiencia previa, solo tu celular y ganas de aprender. Transforma tus ideas en videos que conecten, vendan y generen impacto. 💡✨</p>",
+   "device_label": "Celular",
+   "level": "basico",
+   "cover_url": "/cursos/capcut-celular.webp",
+   "promo_video_id": "ae38f0cc-f58d-4760-902c-43b671e1753c",
+   "learn_points": [
+    "Organizar, cortar y dar formato a tus videos para cada red social",
+    "Quitar fondos automáticamente, a mano y con chroma key",
+    "Animar con keyframes, curvas de velocidad y máscaras",
+    "Mejorar tu voz, extraer audio y trabajar la música",
+    "Subtitular automático y manual, con textos que llaman la atención",
+    "Transiciones, efectos y herramientas de IA (contacto visual, retoque, seguimiento)",
+    "Recrear efectos virales: clones, cambio de ropa, jumpcuts y ritmos"
+   ],
+   "requirements": [
+    "Un celular (Android o iPhone) con CapCut instalado",
+    "Ganas de aprender: no necesitas experiencia previa"
+   ],
+   "price_usd": 27.9,
+   "sale_price_usd": null,
+   "sale_ends_at": null,
+   "status": "published",
+   "sort_order": 1,
+   "wp_id": 17133,
+   "created_at": "2026-11-05T16:46:28.613Z",
+   "updated_at": "2026-11-05T16:46:28.613Z"
+  },
+  {
+   "id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "slug": "capcut-pc-de-cero-a-pro",
+   "title": "CapCut PC de Cero a Pro",
+   "subtitle": "Domina CapCut en tu computadora: de lo básico a técnicas avanzadas con proyectos reales.",
+   "description_html": "<p data-start=\"79\" data-end=\"365\">Prepárate para crear videos impactantes utilizando una de las herramientas más potentes y versátiles del momento. En este curso aprenderás desde lo más básico hasta técnicas avanzadas que te permitirán producir contenido profesional para redes sociales, negocios o proyectos personales.</p><p data-start=\"367\" data-end=\"540\">Trabajaremos paso a paso con ejercicios prácticos y reales, para que al finalizar puedas editar tus propios videos con confianza, fluidez y un estilo que realmente destaque.</p><p data-start=\"542\" data-end=\"726\" data-is-last-node=\"\" data-is-only-node=\"\">No necesitas experiencia previa, solo tu computadora y ganas de aprender. Es momento de llevar tus ideas a otro nivel y convertirlas en contenido que conecte, venda y genere impacto 🚀</p>",
+   "device_label": "PC",
+   "level": "basico",
+   "cover_url": "/cursos/capcut-pc-de-cero-a-pro.webp",
+   "promo_video_id": null,
+   "learn_points": [
+    "Importar y organizar tu material como un editor profesional",
+    "Formatos de video, cortes precisos y eliminación de fondo a detalle",
+    "Keyframes, curvas de velocidad y efectos con máscaras (espejo, cielo)",
+    "Audio profesional: música, efectos, grabación y mejora de voz",
+    "Subtítulos automáticos y manuales, textos y animaciones",
+    "Colorización, iluminación, estabilización y retoque con IA",
+    "Exportar en la mejor calidad y editar un proyecto final completo"
+   ],
+   "requirements": [
+    "Una computadora (Windows o Mac) con CapCut PC",
+    "No necesitas experiencia previa"
+   ],
+   "price_usd": 27.9,
+   "sale_price_usd": null,
+   "sale_ends_at": null,
+   "status": "published",
+   "sort_order": 2,
+   "wp_id": 17214,
+   "created_at": "2026-11-05T16:46:28.613Z",
+   "updated_at": "2026-11-05T16:46:28.613Z"
+  }
+ ],
+ "modules": [
+  {
+   "id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 1: Aspectos Básicos",
+   "sort_order": 1
+  },
+  {
+   "id": "45148de1-c3ee-58dc-b6af-e77ecfef4947",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 1: Iniciamos",
+   "sort_order": 1
+  },
+  {
+   "id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 2: Organización de Videos",
+   "sort_order": 2
+  },
+  {
+   "id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 2: Organización de Videos",
+   "sort_order": 2
+  },
+  {
+   "id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 3: Eliminar Fondo",
+   "sort_order": 3
+  },
+  {
+   "id": "6738b137-754d-5893-ab22-87bd07830de0",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 3: Eliminar Fondo",
+   "sort_order": 3
+  },
+  {
+   "id": "c4691308-c943-5833-b729-1d1947988064",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 4: Keyframes",
+   "sort_order": 4
+  },
+  {
+   "id": "51c2f7a2-b10c-5664-94b0-d00086bd2467",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 4: Keyframes",
+   "sort_order": 4
+  },
+  {
+   "id": "ea7559f9-3937-5202-82a6-d28440ac3355",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 5: Máscaras",
+   "sort_order": 5
+  },
+  {
+   "id": "66d8217f-8b1e-52f5-839d-749592c8296c",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 5: Máscaras",
+   "sort_order": 5
+  },
+  {
+   "id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 6: Audio",
+   "sort_order": 6
+  },
+  {
+   "id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 6: Audio",
+   "sort_order": 6
+  },
+  {
+   "id": "0b00dde3-974c-57f7-8dfa-3556be4105b4",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 7: Texto",
+   "sort_order": 7
+  },
+  {
+   "id": "1f817fd7-19e3-551d-bb81-7aa2f128a02b",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 7: Textos",
+   "sort_order": 7
+  },
+  {
+   "id": "45617b79-0d6a-5ca0-854a-a294823f1323",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 8: Efectos, transiciones y animaciones",
+   "sort_order": 8
+  },
+  {
+   "id": "b7c25f93-b257-5e53-99e4-7c83a1bc89b3",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 8: Efectos",
+   "sort_order": 8
+  },
+  {
+   "id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 9: Herramientas",
+   "sort_order": 9
+  },
+  {
+   "id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 9: Herramientas",
+   "sort_order": 9
+  },
+  {
+   "id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 10: Ejercicios",
+   "sort_order": 10
+  },
+  {
+   "id": "419c3a6e-f446-5745-821e-fef81f519125",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 10: Colorización",
+   "sort_order": 10
+  },
+  {
+   "id": "9efd3190-3802-5011-953a-31633f84f597",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "title": "Módulo 11: Proyecto Final",
+   "sort_order": 11
+  },
+  {
+   "id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 11: Ejercicios",
+   "sort_order": 11
+  },
+  {
+   "id": "7c599f4d-36eb-5f40-9b11-bd8fc8f21ce3",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 12: Exportación",
+   "sort_order": 12
+  },
+  {
+   "id": "8f9d3b7c-550b-5024-aa20-df849eb43d09",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "title": "Módulo 13: Proyecto Final",
+   "sort_order": 13
+  }
+ ],
+ "lessons": [
+  {
+   "id": "11187ce4-b8fb-537b-a1d3-96adc25bc245",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "c4691308-c943-5833-b729-1d1947988064",
+   "title": "Keyframes en 03 Pasos",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "8acac16e-1b47-5d4e-9bb2-cfc59cfbcfa9",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Música y Efectos de Sonido",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "65407298-4326-5865-943a-d1f1bf45e13c",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "0b00dde3-974c-57f7-8dfa-3556be4105b4",
+   "title": "Texto y Propiedades",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "3ef4289a-ca97-5d62-a5aa-2aaf7144cfc8",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "7c599f4d-36eb-5f40-9b11-bd8fc8f21ce3",
+   "title": "Exportación",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "5020bfee-9acb-59e2-80ba-be477b234e8e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "6738b137-754d-5893-ab22-87bd07830de0",
+   "title": "Eliminación Automática",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "a288a920-9ee1-57f8-a23e-fd6b9ec8153f",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "ea7559f9-3937-5202-82a6-d28440ac3355",
+   "title": "Qué son las Máscaras",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "860f83af-1dd9-5b45-9bc2-1a7d8271cd56",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Biblioteca de Audio",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "22e094a1-4301-5f90-a210-136e1c1e65ec",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Sobre edificio",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "737afe11-f73c-57e7-b2b1-8c31bec4bcf3",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "1f817fd7-19e3-551d-bb81-7aa2f128a02b",
+   "title": "Herramienta Texto",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "bfed6d9d-461f-5e29-96d8-b1b7bda56584",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "45617b79-0d6a-5ca0-854a-a294823f1323",
+   "title": "Transiciones",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "4ab71712-fc9d-52d4-8404-dc88578bf2a9",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Calidad de video",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "360103d1-5e37-5a1c-9767-a398cfe4ab21",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "8f9d3b7c-550b-5024-aa20-df849eb43d09",
+   "title": "Proyecto Final",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "99e1c4e7-7dc1-5f16-a5b6-883e848ce3c1",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "419c3a6e-f446-5745-821e-fef81f519125",
+   "title": "Colorización",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "31cd439b-14ae-532c-9db4-4ff79f103388",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Calidad de Imagen",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "c7ad400a-936e-50f0-bdbd-92a0dfad0eed",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Sobre edificios",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "864cb234-bfcb-5773-bd0f-c75a4722ceee",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Agregando Contenido",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "774c6d47-ea96-5eee-add4-160192e7ee26",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "9efd3190-3802-5011-953a-31633f84f597",
+   "title": "Editemos Juntos",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "5a093a6b-721e-593c-9f06-16c78ea639cb",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "45148de1-c3ee-58dc-b6af-e77ecfef4947",
+   "title": "Reconocimiento de la Plataforma",
+   "sort_order": 1,
+   "is_preview": true,
+   "duration_seconds": null
+  },
+  {
+   "id": "deb0861d-2b74-54df-afd5-51a9cdad3d61",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "title": "Importar Material",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "61f9e491-e094-5873-b25c-ec64aadd2284",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "b7c25f93-b257-5e53-99e4-7c83a1bc89b3",
+   "title": "Transiciones",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f4ef1010-9fb1-51a5-b9f6-699eb68e2346",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "title": "Eliminación Automática",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "2e145155-73be-5b4b-adde-f489cce8cbf9",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "title": "Bienvenida",
+   "sort_order": 1,
+   "is_preview": true,
+   "duration_seconds": null
+  },
+  {
+   "id": "393eaa17-da93-5e57-a0f0-42af1f61deb0",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "51c2f7a2-b10c-5664-94b0-d00086bd2467",
+   "title": "Keyframes en 3 Pasos",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "e27b8a61-0720-5616-b5e7-94ff93d794b0",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "66d8217f-8b1e-52f5-839d-749592c8296c",
+   "title": "Qué son las Máscaras",
+   "sort_order": 1,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f2002905-463f-502e-9563-5b62d583eab4",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "title": "Organizando Tus Videos",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "a93a2d72-569b-5ce7-bed6-b4237421878f",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "0b00dde3-974c-57f7-8dfa-3556be4105b4",
+   "title": "Subtítulos",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "1ef9760f-b22d-5375-9de3-a4784aa7605e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "45617b79-0d6a-5ca0-854a-a294823f1323",
+   "title": "Animaciones",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "edd0ac3b-21b1-5517-89f8-89aea72d5883",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "45148de1-c3ee-58dc-b6af-e77ecfef4947",
+   "title": "CapCut Pro",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "0566f372-8068-5f9a-b4b6-98c28fbcf3e2",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Velocidad",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "feffdb41-1d8b-55d8-b0fc-78798443aad2",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Relación de Aspecto",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "73530472-9585-531a-a419-6718036c9b04",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "51c2f7a2-b10c-5664-94b0-d00086bd2467",
+   "title": "Curvas de Velocidad",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "ec34c4a5-af61-5086-b972-3aac37452bf6",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "6738b137-754d-5893-ab22-87bd07830de0",
+   "title": "Eliminación Personalizada",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "7a3712ce-a8b2-5b8e-a52b-8f6e6700c316",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Estabilización de Cámara",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "25e0b40b-2bbf-521c-94e9-0472bfc7d27d",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "66d8217f-8b1e-52f5-839d-749592c8296c",
+   "title": "Espejo en el Cielo",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "ff8c9fd7-e751-5a51-9d1e-28735d587b13",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "c4691308-c943-5833-b729-1d1947988064",
+   "title": "Curvas de Velocidad",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "154c3d84-87d8-5217-b93d-08c24930f39d",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Zoom Objetos",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "c9fb6c24-14c4-59d9-8f4d-e0c90b09d990",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "b7c25f93-b257-5e53-99e4-7c83a1bc89b3",
+   "title": "Efectos",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "5c50c224-e5db-52aa-abfb-2c95a7f61e34",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "ea7559f9-3937-5202-82a6-d28440ac3355",
+   "title": "Ejercicios",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f4cc8f9c-cb2e-5146-ba6e-2c5a147bd672",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "title": "Eliminación Personalizada",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "3f0e37ec-9b17-5c4e-8eab-a358fab7d2ca",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Extraer Audio",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "0f0f6249-18eb-58db-a672-8390ae15d153",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Extraer Audio",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "2be13046-9f52-5b87-b878-5d976bafaf1e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "title": "Instalación y Precios",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "18ab210a-06ee-54d9-b963-68a32e1746cf",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Clones",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "0375bd98-ed7e-5c13-a2e5-724fb428573e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "1f817fd7-19e3-551d-bb81-7aa2f128a02b",
+   "title": "Subtitulado",
+   "sort_order": 2,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "dd94a1f4-180b-5132-b713-e376b990e5ed",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Grabación de Voz",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "d5ae1642-d429-54df-bc1e-513555ad0246",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "1f817fd7-19e3-551d-bb81-7aa2f128a02b",
+   "title": "Subtitulado Manual",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "c34a41ce-92b8-5119-96f8-05e168a4f244",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "45148de1-c3ee-58dc-b6af-e77ecfef4947",
+   "title": "Material de Trabajo",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "84dc45e1-baf4-598c-af4c-530a07c68d9e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "45617b79-0d6a-5ca0-854a-a294823f1323",
+   "title": "Efectos",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f9210fab-df89-5b7a-9f85-fbb5fb21efbe",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Contacto Visual",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "194a2cf2-d43b-5348-958d-238b6fb3beb7",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "title": "Tamaño Posición y Giro",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "dc6af43b-fcda-57a8-ae64-5d5fe48441a3",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Adición de Iluminación",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "a14ce457-4c67-5bdc-8d79-141a753a3f5b",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "0b00dde3-974c-57f7-8dfa-3556be4105b4",
+   "title": "Subtítulos Manuales",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "ba6bf2f3-6beb-5989-a4da-3fd01756a199",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "66d8217f-8b1e-52f5-839d-749592c8296c",
+   "title": "Frente a Espejo",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "9f08c632-5975-5afd-9535-c9c386afd090",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "title": "Chroma Key",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "3cbca2a6-e645-51da-bac7-26dfa753d99d",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Posición Tamaño y Giro",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "04fd9a12-20dc-5720-aad8-3ce9c48148f8",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Cambio de Ropa",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "9d1be0e0-2418-5901-bdd2-7b9878f6ff5e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "title": "Dispositivo Ideal - iPad",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "0229d20b-76cd-5161-bd6f-0fcd4967e0c5",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "51c2f7a2-b10c-5664-94b0-d00086bd2467",
+   "title": "Efecto Aparición y Desaparición",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "fe474f3c-2b35-5e0b-994a-e80764ff7239",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Zoom de Objetos",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "282455cc-6f9a-5c41-a202-0cdde70d2519",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "b7c25f93-b257-5e53-99e4-7c83a1bc89b3",
+   "title": "Animaciones",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "2f118443-5a28-5f0a-9916-0b0fb69990e8",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "6738b137-754d-5893-ab22-87bd07830de0",
+   "title": "Chroma Key",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "a1469099-7b83-5ace-a4d4-1f84b5337ca3",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "c4691308-c943-5833-b729-1d1947988064",
+   "title": "Ejercicios",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f089201b-b7d3-5008-9553-ff98992357f4",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Grabar Voz",
+   "sort_order": 3,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "25a45ce7-2c4c-5fe2-b40e-7a8e3e63a977",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "title": "Cortando a Detalle",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "fdb8b676-0f3b-5904-82b5-c5a27ece26c3",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "title": "CapCut Celular vs CapCut PC",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "4425482a-66f1-5e2f-95a8-1204385110c3",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Organización de Videos",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "40ed2422-416b-51dc-a9c4-0b41d832dc85",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Mejorar Voz",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "1d4e10a5-83df-5655-88b0-35aacfb08847",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Retoque",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "e2057825-0303-5cf7-a0b3-2c7058975c27",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Jumpcuts",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "41870da6-1c48-5e0d-8ce1-bbf629be1978",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "title": "Formatos de Video",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "ff549166-dd30-5160-9f85-fd89486a324a",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Mejorar Voz",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "694aa5bf-3067-5442-9fde-3dcc05563551",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Contacto Visual",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "41e8846f-cedb-54a0-ab93-6d7e8c27ceee",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Jumpcuts",
+   "sort_order": 4,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "7de871eb-862f-549a-ba41-768cfba74fe8",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "32a26ad6-a554-596c-82ac-6e451b2ea485",
+   "title": "Ejercicios",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "b815f284-a10b-5d41-847c-f6fa0409d8df",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "96924baf-9aa3-5263-b2af-6c68cf3bccd9",
+   "title": "Cortes",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "8c262b0d-b662-5770-9c55-4b195ac4a016",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Ritmos",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "cbe2590e-bec7-505f-ad4e-3d367891fc9b",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Corte de Videos",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "a4402a71-54aa-5967-b5cf-d13babbfc5ec",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Estabilización",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "5c8721de-4f6d-533c-8429-c2ec52b27613",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Seguimiento de Cámara",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "d281eae3-990f-5685-a1aa-f71c59f00dee",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Filtros y Modificadores de Voz",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "1481a071-223f-5692-baf8-4db01657916e",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "55014371-d530-5ebc-9f43-2877d26e4edd",
+   "title": "Material de Trabajo",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "dd1c71df-bb93-5a6f-8e40-cbc3f771368f",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Cambio de Ropa",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "f30b4f5b-76ae-5e46-bf15-25a65a77161d",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Modificadores de Voz",
+   "sort_order": 5,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "af0a324f-f9a1-580c-b799-dd6cc1f654be",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "a793651e-295a-573e-845f-d544bbd9c18f",
+   "title": "Aparición y Desaparición de Audio",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "3b75ad9a-c17b-5d03-8121-09120c97004c",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "655b9df7-d696-54ee-82e4-4269f556bc76",
+   "title": "Recorte y Ampliación de IA",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "32120d0c-1457-5220-ad84-30741fbce44b",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "df209f4d-820b-5ab6-b23d-c7373119c7e4",
+   "title": "Clones",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "23e1b530-c690-599f-93a5-815fa61a1ace",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "880c61fb-c326-56c0-a340-7b081fc32acd",
+   "title": "Aparición y Desaparición Progresiva",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "4ae20432-d741-5421-bb63-0365ae26e108",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Congelar",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "d6de26e9-df9f-50f0-bee7-2d3214eeaf6b",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "ba4804f2-60c7-5686-9a49-0bae4bf03122",
+   "title": "Ritmos",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "0c90635b-4625-515b-93a2-e50e6e334204",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Seguimiento de Texto",
+   "sort_order": 6,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "c0a48143-a473-590c-ba73-2e9423c1c485",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Congelar",
+   "sort_order": 7,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "5ce99767-5e21-5e06-9eb1-7f8137bff191",
+   "course_id": "334cc810-6a23-5203-a341-e0ee096d0cb2",
+   "module_id": "be499fb0-e337-5aab-8654-68b0444194c3",
+   "title": "Retoque",
+   "sort_order": 7,
+   "is_preview": false,
+   "duration_seconds": null
+  },
+  {
+   "id": "8ff00424-35f1-536f-a700-9f742d0a43e4",
+   "course_id": "e092159f-4a8d-5341-97e1-a8b57bc1f1ce",
+   "module_id": "dd5cf0f4-6051-5158-973a-4027d798cfee",
+   "title": "Revertir",
+   "sort_order": 8,
+   "is_preview": false,
+   "duration_seconds": null
+  }
+ ]
+}
