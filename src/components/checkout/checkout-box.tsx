@@ -247,7 +247,7 @@ export function CheckoutBox({
               id="coupon"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              placeholder="Ej. TIKTOK30"
+              placeholder="Ingrésalo aquí"
               autoComplete="off"
               className="h-11 uppercase"
               maxLength={40}
