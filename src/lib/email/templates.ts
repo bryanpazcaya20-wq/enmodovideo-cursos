@@ -15,7 +15,7 @@ const BRAND = {
 
 const SOCIAL = {
   whatsapp: "https://wa.me/51906583864",
-  tiktok: "https://www.tiktok.com/@modovideo",
+  tiktok: "https://www.tiktok.com/@enmodovideo",
   web: "https://www.enmodovideo.com",
 };
 
@@ -59,7 +59,7 @@ function layout(opts: { siteUrl: string; preheader: string; body: string; unsubs
   const { siteUrl, preheader, body, unsubscribeUrl, forAdmin } = opts;
   const footer = forAdmin
     ? `Aviso automático del panel de En Modo Video.`
-    : `<a href="${SOCIAL.whatsapp}" style="color:${BRAND.purple}">WhatsApp</a> · <a href="${SOCIAL.tiktok}" style="color:${BRAND.purple}">TikTok @modovideo</a> · <a href="${SOCIAL.web}" style="color:${BRAND.purple}">www.enmodovideo.com</a>${
+    : `<a href="${SOCIAL.whatsapp}" style="color:${BRAND.purple}">WhatsApp</a> · <a href="${SOCIAL.tiktok}" style="color:${BRAND.purple}">TikTok @enmodovideo</a> · <a href="${SOCIAL.web}" style="color:${BRAND.purple}">www.enmodovideo.com</a>${
         unsubscribeUrl ? `<br><br><a href="${esc(unsubscribeUrl)}" style="color:${BRAND.muted}">Darme de baja</a>` : ""
       }`;
 
