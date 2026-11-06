@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Alert, Input } from "@/components/ui/form";
+import { OtherPaymentButton } from "@/components/checkout/other-payment-button";
 import { formatUsd } from "@/lib/pricing";
 
 type PayPalButtonsInstance = { render: (el: HTMLElement) => Promise<void>; close?: () => Promise<void>; isEligible?: () => boolean };
@@ -62,6 +63,7 @@ export function CheckoutBox({
   initialCoupon,
   initialCouponError,
   couponsEnabled = true,
+  other,
 }: {
   slug: string;
   initial: Totals;
@@ -69,6 +71,8 @@ export function CheckoutBox({
   initialCoupon?: string;
   initialCouponError?: string | null;
   couponsEnabled?: boolean;
+  /** Datos para el botón «Otros métodos de pago» (Yape, Plin, BCP, Binance…). */
+  other?: { courseTitle: string; email: string | null; name?: string | null; initialOpen?: boolean };
 }) {
   const router = useRouter();
   const [totals, setTotals] = useState<Totals>(initial);
@@ -294,6 +298,24 @@ export function CheckoutBox({
             <div ref={cardRef} />
           </div>
         </>
+      )}
+
+      {/* Otros métodos: Yape, Plin, BCP, Binance, Western Union, Global66 → WhatsApp */}
+      {other && !isFree && phase === "idle" && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 text-xs text-subtle">
+            <span className="h-px flex-1 bg-border" /> o paga con Yape, Plin, BCP y más <span className="h-px flex-1 bg-border" />
+          </div>
+          <OtherPaymentButton
+            courseTitle={other.courseTitle}
+            slug={slug}
+            total={totals.total}
+            coupon={totals.coupon?.code}
+            email={other.email}
+            name={other.name}
+            initialOpen={other.initialOpen}
+          />
+        </div>
       )}
     </div>
   );

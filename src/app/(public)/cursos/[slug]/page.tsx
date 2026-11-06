@@ -155,7 +155,10 @@ export default async function CoursePage({ params }: PageProps<"/cursos/[slug]">
               <LinkButton href={buyHref} size="lg" className="mt-5 w-full">
                 Comprar ahora · {formatUsd(currentPrice(course))}
               </LinkButton>
-              <p className="mt-3 text-center text-xs text-subtle">Pagas con PayPal o con tarjeta de débito/crédito.</p>
+              <LinkButton href={`${buyHref}?otros=1`} variant="secondary" size="lg" className="mt-3 w-full">
+                <CreditCard className="size-5" /> Otros métodos de pago
+              </LinkButton>
+              <p className="mt-3 text-center text-xs text-subtle">PayPal o tarjeta · Yape, Plin, BCP · Binance, Western Union, Global66</p>
               <ul className="mt-5 space-y-2.5 border-t border-border pt-5 text-sm text-muted">
                 <li className="flex gap-2.5"><ShieldCheck className="size-4 shrink-0 text-success" /> Pago seguro con PayPal o tarjeta</li>
                 <li className="flex gap-2.5"><Sparkles className="size-4 shrink-0 text-success" /> Acceso inmediato después del pago</li>

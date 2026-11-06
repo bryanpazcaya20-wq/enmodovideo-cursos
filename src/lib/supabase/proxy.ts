@@ -87,7 +87,13 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user && GUEST_ONLY.some((p) => matches(pathname, p))) {
-    return redirectTo("/mis-cursos");
+    // Ya inició sesión: lo llevamos a donde iba (?next=…), si es una ruta interna.
+    const next = request.nextUrl.searchParams.get("next") ?? "";
+    const safe = next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : "/mis-cursos";
+    const target = new URL(safe, request.nextUrl.origin);
+    const redirect = NextResponse.redirect(target);
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
   }
 
   return response;

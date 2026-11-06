@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, Infinity as InfinityIcon, Lock, Sparkles } from "lucide-react";
 import { CheckoutBox } from "@/components/checkout/checkout-box";
-import { requireUser } from "@/lib/auth";
+import { getCurrentProfile, requireUser } from "@/lib/auth";
 import { CheckoutError, hasActiveCoupons, isEnrolled, quote } from "@/lib/checkout";
 import { getPublicCourse } from "@/lib/courses/public";
 
@@ -23,7 +23,10 @@ export default async function BuyPage({ params, searchParams }: PageProps<"/comp
     throw e;
   });
   // Cupón que llega en el enlace (?cupon=XXXX): se valida aquí mismo.
-  const cupon = (await searchParams).cupon;
+  const sp = await searchParams;
+  const cupon = sp.cupon;
+  const openOther = sp.otros === "1";
+  const profile = await getCurrentProfile();
   const initialCoupon = typeof cupon === "string" ? cupon.slice(0, 40).toUpperCase() : undefined;
   let q = base;
   let couponError: string | null = null;
@@ -79,6 +82,7 @@ export default async function BuyPage({ params, searchParams }: PageProps<"/comp
               initialCoupon={couponError ? initialCoupon : undefined}
               initialCouponError={couponError}
               couponsEnabled={couponsEnabled}
+              other={{ courseTitle: course.title, email: user.email ?? null, name: profile?.full_name, initialOpen: openOther }}
               initial={{ price: q.price, discount: q.discount, total: q.total, coupon: q.coupon ? { code: q.coupon.code, label: q.coupon.label } : null }}
             />
             <p className="mt-5 text-center text-xs leading-relaxed text-subtle">
