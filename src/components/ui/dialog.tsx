@@ -33,7 +33,7 @@ export function Dialog({
       onClose={onClose}
       onClick={(e) => e.target === ref.current && onClose()}
       className={cn(
-        "m-0 mt-auto w-full max-w-none rounded-t-3xl border border-border bg-surface p-0 text-text shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm sm:m-auto sm:max-w-md sm:rounded-3xl",
+        "m-0 mt-auto w-full max-w-none rounded-t-3xl border border-border bg-surface p-0 text-text shadow-2xl backdrop:bg-text/40 backdrop:backdrop-blur-sm sm:m-auto sm:max-w-md sm:rounded-3xl",
         className,
       )}
     >

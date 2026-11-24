@@ -11,11 +11,11 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "En Modo Video — Cursos de CapCut para celular y PC",
+    default: "En Modo Video — Cursos de CapCut, páginas web y más",
     template: "%s · En Modo Video",
   },
   description:
-    "Cursos completos de edición de video con CapCut, desde cero hasta nivel pro, para tu celular o tu PC. Pago único con PayPal y acceso de por vida.",
+    "Cursos completos de edición de video con CapCut (celular y PC) y de creación de páginas web, desde cero. Pago único con PayPal y acceso de por vida.",
   applicationName: "En Modo Video",
   openGraph: {
     type: "website",
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0e0a14",
-  colorScheme: "dark",
+  themeColor: "#fcf9f6",
+  colorScheme: "light",
   width: "device-width",
   initialScale: 1,
 };

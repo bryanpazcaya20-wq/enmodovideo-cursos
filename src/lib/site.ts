@@ -1,7 +1,7 @@
 // Datos de la marca usados en la web pública.
 export const SITE = {
   name: "En Modo Video",
-  tagline: "Cursos de edición de video con CapCut",
+  tagline: "Cursos de edición de video, páginas web y más",
   whatsappNumber: "+51 906 583 864",
   whatsappUrl: "https://wa.me/51906583864",
   whatsappSupportText: "Hola ENMODOVIDEO 👋 Tengo una consulta sobre",
@@ -33,3 +33,6 @@ export function whatsappLink(text: string) {
 
 /** Ruta del área del alumno después de iniciar sesión. */
 export const HOME_MEMBER = "/mis-cursos";
+
+/** Cursos que llevan la etiqueta «Nuevo» en el catálogo (por slug). */
+export const NEW_COURSE_SLUGS: string[] = ["paginas-web"];

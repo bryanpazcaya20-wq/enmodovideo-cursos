@@ -172,7 +172,7 @@ export function LessonView({ course, lessonId, hasVideo, bodyHtml, welcome }: Pr
                   if (!done) setDone(true);
                   router.push("/mis-cursos");
                 }}
-                className="inline-flex items-center gap-1.5 rounded-full bg-success px-5 py-2.5 text-sm font-semibold text-bg hover:bg-success/90"
+                className="inline-flex items-center gap-1.5 rounded-full bg-success px-5 py-2.5 text-sm font-semibold text-white hover:bg-success/90"
               >
                 <CheckCircle2 className="size-4" /> Terminar curso
               </button>
@@ -194,7 +194,7 @@ export function LessonView({ course, lessonId, hasVideo, bodyHtml, welcome }: Pr
 
       {menuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Temario">
-          <button type="button" className="absolute inset-0 bg-black/70" onClick={() => setMenuOpen(false)} aria-label="Cerrar temario" />
+          <button type="button" className="absolute inset-0 bg-text/40" onClick={() => setMenuOpen(false)} aria-label="Cerrar temario" />
           <div className="absolute inset-y-0 right-0 flex w-[88%] max-w-sm flex-col bg-surface shadow-2xl">
             <button type="button" onClick={() => setMenuOpen(false)} className="absolute right-3 top-3 z-10 rounded-full p-2 text-muted hover:bg-surface-2" aria-label="Cerrar">
               <X className="size-5" />

@@ -22,7 +22,7 @@ export function SiteFooter() {
         <div className="space-y-3">
           <Logo />
           <p className="max-w-xs text-sm leading-relaxed text-muted">
-            Cursos de edición de video con CapCut, para celular y PC. Aprende a tu ritmo, con acceso de por vida.
+            Cursos de edición de video con CapCut y de páginas web. Aprende a tu ritmo, con acceso de por vida.
           </p>
         </div>
 

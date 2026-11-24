@@ -53,7 +53,7 @@ export default async function CoursePage({ params }: PageProps<"/cursos/[slug]">
             <div className="mt-5 flex flex-wrap gap-2 text-xs font-semibold">
               {course.device_label && (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-soft px-3 py-1 text-violet">
-                  <DeviceIcon label={course.device_label} className="size-3.5" /> CapCut {course.device_label}
+                  <DeviceIcon label={course.device_label} className="size-3.5" /> {/capcut/i.test(course.title) ? `CapCut ${course.device_label}` : course.device_label}
                 </span>
               )}
               <span className="rounded-full bg-surface-2 px-3 py-1 text-muted">Nivel {LEVEL_LABEL[course.level].toLowerCase()}</span>

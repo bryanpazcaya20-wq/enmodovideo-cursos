@@ -162,7 +162,7 @@ function Step({ n, title, done, children }: { n: number; title: string; done: bo
       <span
         className={cn(
           "grid size-7 shrink-0 place-items-center rounded-full text-sm font-bold",
-          done ? "bg-success text-bg" : "bg-surface-2 text-muted",
+          done ? "bg-success text-white" : "bg-surface-2 text-muted",
         )}
         aria-hidden
       >

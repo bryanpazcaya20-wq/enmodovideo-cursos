@@ -9,11 +9,11 @@ export function DeviceIcon({ label, className = "size-4" }: { label: string | nu
   return /pc|computadora|mac/i.test(label ?? "") ? <MonitorPlay className={className} /> : <Smartphone className={className} />;
 }
 
-export function CourseCard({ course, priority }: { course: CourseCardData; priority?: boolean }) {
+export function CourseCard({ course, priority, badge }: { course: CourseCardData; priority?: boolean; badge?: string }) {
   return (
     <Link
       href={`/cursos/${course.slug}`}
-      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface transition-all hover:-translate-y-1 hover:border-violet/50 hover:shadow-[0_20px_50px_-20px_#a77bdb55]"
+      className="group flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface shadow-[var(--shadow-card)] transition-all hover:-translate-y-1 hover:border-violet/40 hover:shadow-[0_24px_50px_-24px_#7a4bb566]"
     >
       <div className="relative aspect-[4/3] overflow-hidden bg-surface-2">
         {course.cover_url && (
@@ -28,8 +28,13 @@ export function CourseCard({ course, priority }: { course: CourseCardData; prior
         )}
         <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-surface to-transparent" />
         {course.device_label && (
-          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-bg/80 px-3 py-1 text-xs font-semibold backdrop-blur">
+          <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-surface/90 px-3 py-1 text-xs font-semibold text-text backdrop-blur">
             <DeviceIcon label={course.device_label} className="size-3.5" /> {course.device_label}
+          </span>
+        )}
+        {badge && (
+          <span className="absolute right-3 top-3 rounded-full bg-coral px-3 py-1 text-xs font-bold uppercase tracking-wider text-white shadow-[var(--shadow-glow)]">
+            {badge}
           </span>
         )}
       </div>

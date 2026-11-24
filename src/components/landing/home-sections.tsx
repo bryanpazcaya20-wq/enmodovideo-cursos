@@ -1,41 +1,49 @@
 import Image from "next/image";
-import { CreditCard, Infinity as InfinityIcon, MessageCircle, MousePointerClick, PlayCircle, ShieldCheck, Smartphone, Sparkles, Zap } from "lucide-react";
+import { BellRing, Bot, CreditCard, Globe, Infinity as InfinityIcon, Megaphone, MessageCircle, MonitorPlay, MousePointerClick, PlayCircle, ShieldCheck, Smartphone, Sparkles, Zap } from "lucide-react";
 import { CourseCard } from "@/components/courses/course-card";
 import { LinkButton } from "@/components/ui/button";
 import type { CourseCard as CourseCardData } from "@/lib/courses/public";
-import { SITE, whatsappLink } from "@/lib/site";
-import heroImage from "../../../public/landing/hero-cursos.webp";
+import { NEW_COURSE_SLUGS, SITE, whatsappLink } from "@/lib/site";
+import heroImage from "../../../public/landing/hero-creadores.webp";
 
 // ---------- Portada ----------
+const TOPICS = [
+  { icon: Smartphone, label: "CapCut celular" },
+  { icon: MonitorPlay, label: "CapCut PC" },
+  { icon: Globe, label: "Páginas web" },
+  { icon: Bot, label: "IA", soon: true },
+  { icon: Megaphone, label: "TikTok Ads", soon: true },
+];
+
 export function Hero({ totalLessons, totalCourses }: { totalLessons: number; totalCourses: number }) {
   return (
-    <section className="relative isolate -mt-16 overflow-hidden pt-16 lg:min-h-[44rem]">
+    <section className="relative isolate -mt-16 overflow-hidden pt-16 lg:min-h-[46rem]">
       <div
         aria-hidden
-        className="absolute inset-x-0 top-0 -z-10 h-[80vw] [mask-image:linear-gradient(to_bottom,black_55%,transparent)] sm:h-[60vw] lg:inset-y-0 lg:h-auto lg:[mask-image:linear-gradient(to_bottom,black_80%,transparent)]"
+        className="absolute -left-[80%] right-0 top-0 -z-10 h-[92vw] [mask-image:linear-gradient(to_bottom,black_70%,transparent)] sm:-left-[45%] sm:h-[62vw] lg:inset-y-0 lg:left-[22%] lg:h-auto lg:[mask-image:linear-gradient(to_right,transparent,black_30%)]"
       >
-        <Image src={heroImage} alt="" fill priority sizes="100vw" placeholder="blur" className="object-cover object-[75%_center]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-bg via-bg/30 to-bg/40 lg:bg-gradient-to-r lg:from-bg lg:via-bg/75 lg:to-bg/10" />
+        <Image src={heroImage} alt="" fill priority sizes="(min-width: 1024px) 80vw, 180vw" placeholder="blur" className="object-cover object-[70%_center]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-bg via-transparent to-transparent lg:hidden" />
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 pb-16 pt-[56vw] sm:pt-[40vw] lg:pb-28 lg:pt-28">
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-[80vw] sm:pt-[52vw] lg:pb-24 lg:pt-28">
         <div className="max-w-xl text-center lg:text-left">
-          <p className="inline-flex items-center gap-2 rounded-full border border-violet/30 bg-bg/60 px-3.5 py-1.5 text-xs font-semibold text-violet backdrop-blur sm:text-sm">
-            <Sparkles className="size-4" /> Cursos completos de CapCut
+          <p className="inline-flex items-center gap-2 rounded-full border border-coral/20 bg-surface/80 px-3.5 py-1.5 text-xs font-semibold text-coral shadow-[var(--shadow-card)] backdrop-blur sm:text-sm">
+            <Sparkles className="size-4" /> Nuevo: curso de páginas web
           </p>
-          <h1 className="mt-5 font-display text-[2.6rem] font-semibold leading-[1.05] tracking-tight drop-shadow-lg sm:text-6xl lg:text-7xl">
-            De cero a <span className="text-gradient">editor pro</span> con CapCut
+          <h1 className="mt-5 font-display text-[2.6rem] font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-[4.25rem]">
+            Crea contenido que <span className="text-gradient">se vea pro</span>
           </h1>
           <p className="mx-auto mt-5 max-w-lg text-lg leading-relaxed text-muted lg:mx-0">
-            Cursos paso a paso para editar desde tu <strong className="text-text">celular</strong> o tu{" "}
-            <strong className="text-text">PC</strong>. Paga una sola vez y aprende a tu ritmo, para siempre.
+            Edita videos desde tu <strong className="text-text">celular</strong> o tu <strong className="text-text">PC</strong> y arma tu propia{" "}
+            <strong className="text-text">página web</strong>. Paga una sola vez y aprende a tu ritmo, para siempre.
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
             <LinkButton href="#cursos" size="lg" className="w-full sm:w-auto">
               Ver los cursos
             </LinkButton>
-            <LinkButton href="#como-funciona" variant="secondary" size="lg" className="w-full backdrop-blur sm:w-auto">
+            <LinkButton href="#como-funciona" variant="secondary" size="lg" className="w-full bg-surface shadow-[var(--shadow-card)] sm:w-auto">
               <PlayCircle className="size-4" /> Cómo funciona
             </LinkButton>
           </div>
@@ -50,13 +58,25 @@ export function Hero({ totalLessons, totalCourses }: { totalLessons: number; tot
           </dl>
         </div>
       </div>
+
+      <div className="border-y border-border bg-surface/70 backdrop-blur">
+        <ul className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-6 gap-y-3 px-4 py-4 text-sm font-medium text-muted sm:gap-x-10">
+          {TOPICS.map(({ icon: Icon, label, soon }) => (
+            <li key={label} className="inline-flex items-center gap-2">
+              <Icon className={soon ? "size-4 text-subtle" : "size-4 text-coral"} />
+              {label}
+              {soon && <span className="rounded-full bg-violet-soft px-2 py-0.5 text-[11px] font-semibold text-violet">Pronto</span>}
+            </li>
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
 
 function Stat({ value, label }: { value: string; label: string }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface/70 px-2 py-3 text-center backdrop-blur">
+    <div className="rounded-2xl border border-border bg-surface/85 px-2 py-3 text-center shadow-[var(--shadow-card)] backdrop-blur">
       <dt className="sr-only">{label}</dt>
       <dd className="font-display text-xl font-semibold sm:text-2xl">{value}</dd>
       <dd className="mt-0.5 text-[11px] leading-tight text-subtle sm:text-xs">{label}</dd>
@@ -65,20 +85,65 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 // ---------- Cursos ----------
+const COMING_SOON = [
+  {
+    title: "Inteligencia Artificial para creadores",
+    text: "Genera imágenes, videos y voces con IA para tu contenido.",
+    image: "/cursos/pronto-ia.webp",
+  },
+  {
+    title: "TikTok Ads",
+    text: "Crea campañas que vendan: públicos, presupuesto y anuncios que funcionan.",
+    image: "/cursos/pronto-tiktok-ads.webp",
+  },
+];
+
 export function CoursesSection({ courses }: { courses: CourseCardData[] }) {
   return (
     <section id="cursos" className="scroll-mt-20 px-4 py-16 sm:py-24">
       <div className="mx-auto max-w-6xl">
-        <SectionTitle eyebrow="Nuestros cursos" title="Elige dónde quieres editar" description="Cada curso es completo por sí solo: empieza por el que tengas a la mano." />
+        <SectionTitle
+          eyebrow="Nuestros cursos"
+          title="Elige qué quieres aprender"
+          description="Edición de video, páginas web y muy pronto IA y TikTok Ads. Cada curso es completo por sí solo."
+        />
         {courses.length ? (
           <div className={courses.length >= 3 ? "mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" : "mx-auto mt-10 grid max-w-4xl gap-6 sm:grid-cols-2"}>
             {courses.map((c, i) => (
-              <CourseCard key={c.id} course={c} priority={i < 2} />
+              <CourseCard key={c.id} course={c} priority={i < 2} badge={NEW_COURSE_SLUGS.includes(c.slug) ? "Nuevo" : undefined} />
             ))}
           </div>
         ) : (
           <p className="mt-10 rounded-2xl border border-dashed border-border p-10 text-center text-muted">Muy pronto publicaremos los cursos.</p>
         )}
+
+        <div className="mt-14">
+          <h3 className="flex items-center gap-3 font-display text-xl font-semibold">
+            Próximamente <span className="h-px flex-1 bg-border" />
+          </h3>
+          <ul className="mt-5 grid gap-5 md:grid-cols-2">
+            {COMING_SOON.map((c) => (
+              <li key={c.title} className="flex overflow-hidden rounded-[var(--radius-card)] border border-dashed border-border bg-surface/70">
+                <div className="relative w-2/5 shrink-0 overflow-hidden">
+                  <Image src={c.image} alt="" fill sizes="(min-width: 768px) 20vw, 40vw" className="object-cover saturate-[0.8]" />
+                  <span className="absolute left-3 top-3 rounded-full bg-text px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">Pronto</span>
+                </div>
+                <div className="flex flex-col justify-center gap-2 p-5">
+                  <p className="font-display text-lg font-semibold leading-tight">{c.title}</p>
+                  <p className="text-sm leading-relaxed text-muted">{c.text}</p>
+                  <a
+                    href={whatsappLink(`Hola ENMODOVIDEO 👋 Avísenme cuando salga el curso de ${c.title}`)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-coral hover:text-coral-hover"
+                  >
+                    <BellRing className="size-4" /> Avísame cuando salga
+                  </a>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </section>
   );
@@ -98,7 +163,7 @@ export function HowItWorks() {
         <SectionTitle eyebrow="Así de fácil" title="Cómo funciona" />
         <ol className="mt-10 grid gap-5 md:grid-cols-3">
           {STEPS.map(({ icon: Icon, title, text }, i) => (
-            <li key={title} className="relative rounded-[var(--radius-card)] border border-border bg-surface p-6">
+            <li key={title} className="relative rounded-[var(--radius-card)] border border-border bg-surface p-6 shadow-[var(--shadow-card)]">
               <span className="absolute right-5 top-5 font-display text-5xl font-semibold text-surface-2">{i + 1}</span>
               <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-coral to-violet text-white">
                 <Icon className="size-6" />
@@ -129,7 +194,7 @@ export function Benefits() {
           <SectionTitle align="left" eyebrow="Por qué con nosotros" title="Aprende haciendo, sin perder tiempo" />
           <ul className="mt-8 grid gap-4 sm:grid-cols-2">
             {BENEFITS.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="rounded-2xl border border-border bg-surface/70 p-5">
+              <li key={title} className="rounded-2xl border border-border bg-surface p-5 shadow-[var(--shadow-card)]">
                 <Icon className="size-6 text-coral" />
                 <p className="mt-3 font-semibold">{title}</p>
                 <p className="mt-1 text-sm leading-relaxed text-muted">{text}</p>
@@ -138,8 +203,8 @@ export function Benefits() {
           </ul>
         </div>
         <div className="relative mx-auto grid w-full max-w-md grid-cols-2 gap-4">
-          <Image src="/landing/celular.webp" alt="Editando en CapCut desde el celular" width={448} height={560} className="rounded-3xl border border-border object-cover shadow-2xl" />
-          <Image src="/landing/pc.webp" alt="Editando en CapCut PC" width={550} height={415} className="mt-16 rounded-3xl border border-border object-cover shadow-2xl" />
+          <Image src="/landing/celular.webp" alt="Editando un video desde el celular" width={448} height={560} className="rounded-3xl border border-border object-cover shadow-2xl" />
+          <Image src="/landing/pc.webp" alt="Editando un video en la computadora" width={550} height={415} className="mt-16 rounded-3xl border border-border object-cover shadow-2xl" />
         </div>
       </div>
     </section>
@@ -214,7 +279,7 @@ export function FinalCta() {
       <div className="mx-auto max-w-4xl overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-coral via-[#c4456b] to-purple p-8 text-center sm:p-14">
         <h2 className="font-display text-3xl font-semibold leading-tight text-white sm:text-5xl">¿Listo para ponerte en modo video?</h2>
         <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">Elige tu curso y empieza hoy mismo. Acceso inmediato y de por vida.</p>
-        <LinkButton href="#cursos" size="lg" variant="secondary" className="mt-8 border-0 bg-white text-bg shadow-xl hover:bg-white/90">
+        <LinkButton href="#cursos" size="lg" variant="secondary" className="mt-8 border-0 bg-white text-text shadow-xl hover:bg-white/90">
           Elegir mi curso
         </LinkButton>
       </div>

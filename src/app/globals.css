@@ -1,35 +1,37 @@
 @import "tailwindcss";
 
-/* ===== En Modo Video — tokens de marca (modo oscuro por defecto) ===== */
+/* ===== En Modo Video — tokens de marca (tema claro) ===== */
 @theme {
-  --color-bg: #0e0a14;
-  --color-surface: #1a1424;
-  --color-surface-2: #241b31;
-  --color-border: #33284a;
-  --color-text: #f6f2fb;
-  --color-muted: #a99db8;
-  --color-subtle: #74688a;
+  --color-bg: #fcf9f6;
+  --color-surface: #ffffff;
+  --color-surface-2: #f5eff8;
+  --color-border: #e8dfee;
+  --color-text: #1f1530;
+  --color-muted: #5d5470;
+  --color-subtle: #776d8c;
 
-  --color-coral: #f4644e;
-  --color-coral-hover: #ff7a63;
-  --color-coral-soft: #f4644e26;
+  /* Coral algo más profundo que el del logo para que el texto blanco de los botones se lea bien */
+  --color-coral: #d4412a;
+  --color-coral-hover: #bd3721;
+  --color-coral-soft: #f4644e1f;
   --color-purple: #53297a;
-  --color-violet: #a77bdb;
-  --color-violet-soft: #a77bdb26;
+  --color-violet: #7a4bb5;
+  --color-violet-soft: #7a4bb51a;
 
-  --color-success: #34d399;
-  --color-warning: #fbbf24;
-  --color-danger: #f87171;
+  --color-success: #058a5f;
+  --color-warning: #b45309;
+  --color-danger: #d42a2a;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-fredoka), var(--font-inter), ui-sans-serif, sans-serif;
 
   --radius-card: 1.25rem;
-  --shadow-glow: 0 10px 40px -10px #f4644e66;
+  --shadow-glow: 0 10px 30px -12px #d4412a80;
+  --shadow-card: 0 1px 2px #1f15300a, 0 12px 32px -16px #1f153026;
 }
 
 html {
-  color-scheme: dark;
+  color-scheme: light;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -46,8 +48,8 @@ body {
 /* Fondo con brillo de marca (landing y auth) */
 .bg-brand-glow {
   background:
-    radial-gradient(60% 50% at 15% 0%, #f4644e22 0%, transparent 60%),
-    radial-gradient(50% 50% at 90% 10%, #a77bdb26 0%, transparent 60%),
+    radial-gradient(60% 50% at 15% 0%, #f4644e1a 0%, transparent 60%),
+    radial-gradient(50% 50% at 90% 10%, #a77bdb22 0%, transparent 60%),
     var(--color-bg);
 }
 
@@ -83,7 +85,7 @@ body {
 .rich h2 { font-size: 1.5rem; }
 .rich h3 { font-size: 1.25rem; }
 .rich a { color: var(--color-violet); text-decoration: underline; text-underline-offset: 3px; }
-.rich strong { color: white; }
+.rich strong { color: var(--color-text); }
 .rich mark { background: var(--color-coral-soft); color: var(--color-text); padding: 0 0.2em; border-radius: 0.25em; }
 .rich img {
   width: 100%;
