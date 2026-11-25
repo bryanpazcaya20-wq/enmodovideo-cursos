@@ -1,12 +1,14 @@
 "use client";
 
-import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, ListVideo, PlayCircle, X } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronLeft, ChevronRight, Circle, Clock, ListVideo, PlayCircle, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { setLessonDoneAction } from "@/actions/learn";
 import { BunnyPlayer } from "@/components/player/bunny-player";
 import type { LearnCourse } from "@/lib/courses/learn";
+import { ProntoBadge } from "@/components/courses/curriculum";
+import { cleanTitle } from "@/lib/courses/coming-soon";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -74,7 +76,23 @@ export function LessonView({ course, lessonId, hasVideo, bodyHtml, welcome }: Pr
       <div className="flex-1 overflow-y-auto">
         {course.modules.map((m) => (
           <ModuleGroup key={m.id} title={m.title} defaultOpen={m.id === moduleOf?.id}>
+            {m.lessons.length === 0 && (
+              <li className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-subtle">
+                <Clock className="size-4 shrink-0" />
+                <span className="flex-1">Estamos preparando este módulo</span>
+                <ProntoBadge />
+              </li>
+            )}
             {m.lessons.map((l) => {
+              if (l.comingSoon) {
+                return (
+                  <li key={l.id} className="flex items-start gap-2.5 px-4 py-2.5 text-sm text-subtle">
+                    <Clock className="mt-0.5 size-4 shrink-0" />
+                    <span className="flex-1">{cleanTitle(l.title)}</span>
+                    <ProntoBadge />
+                  </li>
+                );
+              }
               const active = l.id === lessonId;
               const isDone = doneIds.has(l.id);
               return (

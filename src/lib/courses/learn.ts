@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Course, CourseModule, Lesson } from "@/types/database";
+import { isComingSoon } from "./coming-soon";
 
 export type MyCourse = Pick<Course, "id" | "slug" | "title" | "subtitle" | "cover_url" | "device_label"> & {
   total: number;
@@ -25,7 +26,7 @@ export async function getMyCourses(userId: string): Promise<MyCourse[]> {
 
   const [{ data: courses }, { data: lessons }, { data: progress }] = await Promise.all([
     supabase.from("courses").select("id, slug, title, subtitle, cover_url, device_label").in("id", ids),
-    supabase.from("lessons").select("id, course_id").in("course_id", ids),
+    supabase.from("lessons").select("id, course_id, title").in("course_id", ids),
     supabase.from("lesson_progress").select("lesson_id, course_id, completed_at").eq("user_id", userId).in("course_id", ids).order("completed_at", { ascending: false }),
   ]);
 
@@ -36,7 +37,7 @@ export async function getMyCourses(userId: string): Promise<MyCourse[]> {
       const mine = (progress ?? []).filter((p) => p.course_id === c.id);
       return {
         ...c,
-        total: (lessons ?? []).filter((l) => l.course_id === c.id).length,
+        total: (lessons ?? []).filter((l) => l.course_id === c.id && !isComingSoon(l.title)).length,
         done: mine.length,
         lastLessonId: mine[0]?.lesson_id ?? null,
         enrolledAt: e.created_at,
@@ -45,7 +46,7 @@ export async function getMyCourses(userId: string): Promise<MyCourse[]> {
     .filter((c): c is MyCourse => c !== null);
 }
 
-export type LearnLesson = Pick<Lesson, "id" | "title" | "sort_order" | "is_preview" | "duration_seconds"> & { done: boolean };
+export type LearnLesson = Pick<Lesson, "id" | "title" | "sort_order" | "is_preview" | "duration_seconds"> & { done: boolean; comingSoon: boolean };
 export type LearnModule = Pick<CourseModule, "id" | "title" | "sort_order"> & { lessons: LearnLesson[] };
 export type LearnCourse = Pick<Course, "id" | "slug" | "title"> & { modules: LearnModule[]; flat: LearnLesson[]; done: number };
 
@@ -64,9 +65,10 @@ export const getLearnCourse = cache(async (slug: string, userId: string): Promis
     ...m,
     lessons: (lessons ?? [])
       .filter((l) => l.module_id === m.id)
-      .map((l) => ({ id: l.id, title: l.title, sort_order: l.sort_order, is_preview: l.is_preview, duration_seconds: l.duration_seconds, done: doneSet.has(l.id) })),
+      .map((l) => ({ id: l.id, title: l.title, sort_order: l.sort_order, is_preview: l.is_preview, duration_seconds: l.duration_seconds, done: doneSet.has(l.id), comingSoon: isComingSoon(l.title) })),
   }));
-  const flat = mods.flatMap((m) => m.lessons);
+  // Las clases «Pronto» se ven en el temario, pero no se navegan ni cuentan para el avance.
+  const flat = mods.flatMap((m) => m.lessons).filter((l) => !l.comingSoon);
   return { ...course, modules: mods, flat, done: flat.filter((l) => l.done).length };
 });
 

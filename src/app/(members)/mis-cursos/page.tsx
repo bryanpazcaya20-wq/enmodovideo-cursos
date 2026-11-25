@@ -29,41 +29,48 @@ export default async function MyCoursesPage({ searchParams }: PageProps<"/mis-cu
       <p className="mt-1 text-muted">{mine.length ? "Sigue donde te quedaste." : "Aún no tienes cursos en esta cuenta."}</p>
 
       {mine.length > 0 ? (
-        <div className="mt-8 grid gap-5 md:grid-cols-2">
-          {mine.map((c) => {
-            const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
-            const href = `/aprender/${c.slug}`;
-            return (
-              <Link
-                key={c.id}
-                href={href}
-                className="group flex gap-4 overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface p-4 transition-colors hover:border-violet/50"
-              >
-                <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-40">
-                  {c.cover_url && <Image src={c.cover_url} alt="" fill sizes="160px" className="object-cover" />}
-                  <span className="absolute inset-0 grid place-items-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
-                    <PlayCircle className="size-10 text-white" />
-                  </span>
-                </div>
-                <div className="flex min-w-0 flex-1 flex-col">
-                  <h2 className="font-display text-xl font-semibold leading-tight">{c.title}</h2>
-                  <p className="mt-1 text-sm text-muted">
-                    {c.done} de {c.total} clases
-                  </p>
-                  <div className="mt-auto pt-4">
-                    <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-                      <div className="h-full rounded-full bg-gradient-to-r from-coral to-violet" style={{ width: `${pct}%` }} />
-                    </div>
-                    <p className="mt-2 flex items-center justify-between text-xs">
-                      <span className="text-subtle">{pct}% completado</span>
-                      <span className="font-semibold text-coral">{pct === 0 ? "Empezar" : pct === 100 ? "Repasar" : "Continuar"} →</span>
-                    </p>
+        <section className="mt-10" aria-labelledby="adquiridos">
+          <h2 id="adquiridos" className="flex items-center gap-3 font-display text-xl font-semibold sm:text-2xl">
+            Cursos adquiridos
+            <span className="rounded-full bg-coral-soft px-2.5 py-0.5 font-sans text-sm font-semibold text-coral">{mine.length}</span>
+            <span className="h-px flex-1 bg-border" />
+          </h2>
+          <div className="mt-6 grid gap-5 md:grid-cols-2">
+            {mine.map((c) => {
+              const pct = c.total ? Math.round((c.done / c.total) * 100) : 0;
+              const href = `/aprender/${c.slug}`;
+              return (
+                <Link
+                  key={c.id}
+                  href={href}
+                  className="group flex gap-4 overflow-hidden rounded-[var(--radius-card)] border border-border bg-surface p-4 shadow-[var(--shadow-card)] transition-colors hover:border-violet/50"
+                >
+                  <div className="relative aspect-[4/3] w-32 shrink-0 overflow-hidden rounded-xl bg-surface-2 sm:w-40">
+                    {c.cover_url && <Image src={c.cover_url} alt="" fill sizes="160px" className="object-cover" />}
+                    <span className="absolute inset-0 grid place-items-center bg-black/30 opacity-0 transition-opacity group-hover:opacity-100">
+                      <PlayCircle className="size-10 text-white" />
+                    </span>
                   </div>
-                </div>
-              </Link>
-            );
-          })}
-        </div>
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <h2 className="font-display text-xl font-semibold leading-tight">{c.title}</h2>
+                    <p className="mt-1 text-sm text-muted">
+                      {c.done} de {c.total} clases
+                    </p>
+                    <div className="mt-auto pt-4">
+                      <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
+                        <div className="h-full rounded-full bg-gradient-to-r from-coral to-violet" style={{ width: `${pct}%` }} />
+                      </div>
+                      <p className="mt-2 flex items-center justify-between text-xs">
+                        <span className="text-subtle">{pct}% completado</span>
+                        <span className="font-semibold text-coral">{pct === 0 ? "Empezar" : pct === 100 ? "Repasar" : "Continuar"} →</span>
+                      </p>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
       ) : (
         <div className="mt-8 rounded-[var(--radius-card)] border border-dashed border-border p-8 text-center">
           <Sparkles className="mx-auto size-8 text-coral" />
@@ -80,9 +87,13 @@ export default async function MyCoursesPage({ searchParams }: PageProps<"/mis-cu
       )}
 
       {others.length > 0 && (
-        <section className="mt-16">
-          <h2 className="font-display text-2xl font-semibold">{mine.length ? "Sigue aprendiendo" : "Cursos disponibles"}</h2>
-          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <section className="mt-20 rounded-[1.75rem] border border-border bg-surface-2/60 px-5 py-8 sm:mt-24 sm:px-8 sm:py-10" aria-labelledby="disponibles">
+          <p className="text-sm font-semibold uppercase tracking-wider text-coral">{mine.length ? "Sigue aprendiendo" : "Empieza hoy"}</p>
+          <h2 id="disponibles" className="mt-1 font-display text-2xl font-semibold sm:text-3xl">
+            {mine.length ? "Más cursos que puedes adquirir" : "Cursos disponibles"}
+          </h2>
+          <p className="mt-2 text-muted">Pago único y acceso de por vida, igual que tus otros cursos.</p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {others.map((c) => (
               <CourseCard key={c.id} course={c} />
             ))}

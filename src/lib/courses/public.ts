@@ -2,6 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { createPublicClient, isSupabaseConfigured } from "@/lib/supabase/public";
 import type { Course, CourseModule, Lesson } from "@/types/database";
+import { isComingSoon } from "./coming-soon";
 
 /** Etiqueta de caché del catálogo: se invalida al guardar cualquier curso, módulo o lección. */
 export const COURSES_TAG = "courses";
@@ -37,7 +38,7 @@ async function fetchCatalog(): Promise<CourseCard[]> {
   const supabase = createPublicClient();
   const [{ data: courses, error }, { data: lessons }, { data: modules }] = await Promise.all([
     supabase.from("courses").select(CARD).eq("status", "published").order("sort_order"),
-    supabase.from("lessons").select("course_id"),
+    supabase.from("lessons").select("course_id, title"),
     supabase.from("course_modules").select("course_id"),
   ]);
   if (error) {
@@ -45,7 +46,8 @@ async function fetchCatalog(): Promise<CourseCard[]> {
     return [];
   }
   const count = (rows: { course_id: string }[] | null, id: string) => (rows ?? []).filter((r) => r.course_id === id).length;
-  return (courses ?? []).map((c) => ({ ...c, lessons_count: count(lessons, c.id), modules_count: count(modules, c.id) }));
+  const ready = (lessons ?? []).filter((l) => !isComingSoon(l.title));
+  return (courses ?? []).map((c) => ({ ...c, lessons_count: count(ready, c.id), modules_count: count(modules, c.id) }));
 }
 
 async function fetchCourse(slug: string): Promise<CourseDetail | null> {
@@ -77,7 +79,7 @@ async function fetchCourse(slug: string): Promise<CourseDetail | null> {
   ]);
   return {
     ...course,
-    lessons_count: lessons?.length ?? 0,
+    lessons_count: (lessons ?? []).filter((l) => !isComingSoon(l.title)).length,
     modules: (modules ?? []).map((m) => ({
       ...m,
       lessons: (lessons ?? [])
